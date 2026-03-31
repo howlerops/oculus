@@ -26,7 +26,7 @@ const (
 	SuccessURL            = "https://platform.claude.com/oauth/code/success?app=claude-code"
 	ManualRedirectURL     = "https://platform.claude.com/oauth/code/callback"
 	ClientID              = "9d1c250a-e61b-44d9-88ed-5944d1962f5e"
-	RedirectPath          = "/oauth/callback"
+	RedirectPath          = "/callback"
 	DefaultScopes         = "org:create_api_key user:profile user:inference user:sessions:claude_code user:mcp_servers user:file_upload"
 	OAuthBetaHeader       = "oauth-2025-04-20"
 )
@@ -92,20 +92,23 @@ func StartOAuthFlow(ctx context.Context) (*OAuthTokens, error) {
 	}
 	port := listener.Addr().(*net.TCPAddr).Port
 
-	redirectURI := fmt.Sprintf("http://127.0.0.1:%d%s", port, RedirectPath)
+	redirectURI := fmt.Sprintf("http://localhost:%d%s", port, RedirectPath)
 
-	// Build authorization URL
-	params := url.Values{
-		"response_type":         {"code"},
-		"client_id":             {ClientID},
-		"redirect_uri":          {redirectURI},
-		"scope":                 {DefaultScopes},
-		"state":                 {state},
-		"code_challenge":        {challenge},
-		"code_challenge_method": {"S256"},
-	}
-
-	authURL := fmt.Sprintf("%s?%s", AuthorizationEndpoint, params.Encode())
+	// Build authorization URL matching TS buildAuthUrl() exactly
+	// Order matters - the server may validate parameter ordering
+	authURL := fmt.Sprintf("%s?%s",
+		AuthorizationEndpoint,
+		url.Values{
+			"code":                  {"true"},
+			"client_id":             {ClientID},
+			"response_type":         {"code"},
+			"redirect_uri":          {redirectURI},
+			"scope":                 {DefaultScopes},
+			"code_challenge":        {challenge},
+			"code_challenge_method": {"S256"},
+			"state":                 {state},
+		}.Encode(),
+	)
 
 	// Channel to receive the auth code
 	codeCh := make(chan string, 1)
