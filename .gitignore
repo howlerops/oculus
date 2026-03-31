@@ -14,3 +14,4 @@ claude-go
 .vscode/
 *.swp
 *.swo
+old-src

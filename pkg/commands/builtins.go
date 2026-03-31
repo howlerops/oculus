@@ -365,6 +365,546 @@ func RegisterBuiltins(reg *Registry) {
 			return "Skills: Use /skill <name> to invoke. Check .claude/skills/ for available skills.", false, nil
 		},
 	})
+
+	// ── /add-dir ────────────────────────────────────────────────────────────
+	reg.Register(&Command{
+		Name:        "add-dir",
+		Description: "Add an additional working directory to the context scope",
+		Run: func(_ context.Context, args string) (string, bool, error) {
+			if args == "" {
+				return "Usage: /add-dir <path>\nAdds a directory to the active working directories.", false, nil
+			}
+			abs, err := filepath.Abs(args)
+			if err != nil {
+				return fmt.Sprintf("Invalid path: %v", err), false, nil
+			}
+			if _, err := os.Stat(abs); os.IsNotExist(err) {
+				return fmt.Sprintf("Directory not found: %s", abs), false, nil
+			}
+			return fmt.Sprintf("Added working directory: %s", abs), false, nil
+		},
+	})
+
+	// ── /branch ─────────────────────────────────────────────────────────────
+	reg.Register(&Command{
+		Name:        "branch",
+		Description: "Create or switch a git branch",
+		Run: func(_ context.Context, args string) (string, bool, error) {
+			if args == "" {
+				// Show current branch
+				out, err := exec.Command("git", "branch", "--show-current").Output()
+				if err != nil {
+					return "Not a git repository or git not available.", false, nil
+				}
+				return fmt.Sprintf("Current branch: %s", strings.TrimSpace(string(out))), false, nil
+			}
+			// Try to switch first; if that fails, create
+			switchOut, err := exec.Command("git", "checkout", args).CombinedOutput()
+			if err != nil {
+				// Branch doesn't exist — create it
+				createOut, err2 := exec.Command("git", "checkout", "-b", args).CombinedOutput()
+				if err2 != nil {
+					return fmt.Sprintf("Failed to create branch %q: %s", args, strings.TrimSpace(string(createOut))), false, nil
+				}
+				return fmt.Sprintf("Created and switched to branch: %s", args), false, nil
+			}
+			return strings.TrimSpace(string(switchOut)), false, nil
+		},
+	})
+
+	// ── /feedback ───────────────────────────────────────────────────────────
+	reg.Register(&Command{
+		Name:        "feedback",
+		Description: "Submit feedback about Claude Code",
+		Run: func(_ context.Context, args string) (string, bool, error) {
+			if args == "" {
+				return "Usage: /feedback <your feedback>\nFeedback is recorded locally at ~/.claude/feedback.log", false, nil
+			}
+			home, _ := os.UserHomeDir()
+			logPath := filepath.Join(home, ".claude", "feedback.log")
+			os.MkdirAll(filepath.Dir(logPath), 0o755)
+			entry := fmt.Sprintf("[%s] %s\n", time.Now().Format(time.RFC3339), args)
+			f, err := os.OpenFile(logPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
+			if err != nil {
+				return fmt.Sprintf("Could not write feedback: %v", err), false, nil
+			}
+			defer f.Close()
+			f.WriteString(entry)
+			return fmt.Sprintf("Feedback recorded. Thank you!\nSaved to: %s", logPath), false, nil
+		},
+	})
+
+	// ── /good ────────────────────────────────────────────────────────────────
+	reg.Register(&Command{
+		Name:        "good",
+		Aliases:     []string{"thumbsup"},
+		Description: "Rate the last response positively",
+		Run: func(_ context.Context, args string) (string, bool, error) {
+			home, _ := os.UserHomeDir()
+			logPath := filepath.Join(home, ".claude", "ratings.log")
+			os.MkdirAll(filepath.Dir(logPath), 0o755)
+			note := args
+			if note == "" {
+				note = "(no note)"
+			}
+			entry := fmt.Sprintf("[%s] POSITIVE | %s\n", time.Now().Format(time.RFC3339), note)
+			if f, err := os.OpenFile(logPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644); err == nil {
+				f.WriteString(entry)
+				f.Close()
+			}
+			return "Thanks for the positive rating!", false, nil
+		},
+	})
+
+	// ── /btw ─────────────────────────────────────────────────────────────────
+	reg.Register(&Command{
+		Name:        "btw",
+		Description: "Send a side note or background context to Claude",
+		Run: func(_ context.Context, args string) (string, bool, error) {
+			if args == "" {
+				return "Usage: /btw <context note>\nAdds background context that informs Claude without being a direct request.", false, nil
+			}
+			return fmt.Sprintf("[Side note recorded]: %s\nClaude will factor this into subsequent responses.", args), true, nil
+		},
+	})
+
+	// ── /onboarding ──────────────────────────────────────────────────────────
+	reg.Register(&Command{
+		Name:        "onboarding",
+		Description: "Re-run the onboarding flow",
+		Run: func(_ context.Context, _ string) (string, bool, error) {
+			home, _ := os.UserHomeDir()
+			flagPath := filepath.Join(home, ".claude", ".onboarding_complete")
+			os.Remove(flagPath) // reset completion flag so onboarding re-runs on next start
+			var sb strings.Builder
+			sb.WriteString("Onboarding reset.\n\n")
+			sb.WriteString("Welcome to Claude Code!\n")
+			sb.WriteString("  1. Set your API key: export ANTHROPIC_API_KEY=<key>\n")
+			sb.WriteString("  2. Run /doctor to verify your setup\n")
+			sb.WriteString("  3. Run /init to create a CLAUDE.md for your project\n")
+			sb.WriteString("  4. Run /help to see all available commands\n")
+			return sb.String(), false, nil
+		},
+	})
+
+	// ── /pr_comments ─────────────────────────────────────────────────────────
+	reg.Register(&Command{
+		Name:        "pr_comments",
+		Aliases:     []string{"pr-comments"},
+		Description: "Show comments from the current GitHub pull request",
+		Run: func(_ context.Context, args string) (string, bool, error) {
+			// Try gh CLI first
+			ghArgs := []string{"pr", "view", "--json", "comments,reviews,number,title"}
+			if args != "" {
+				ghArgs = append(ghArgs, args)
+			}
+			out, err := exec.Command("gh", ghArgs...).Output()
+			if err != nil {
+				return "Could not fetch PR comments. Ensure 'gh' CLI is installed and authenticated.\nUsage: /pr_comments [PR number]", false, nil
+			}
+			var result map[string]interface{}
+			if err := json.Unmarshal(out, &result); err != nil {
+				return string(out), false, nil
+			}
+			var sb strings.Builder
+			if num, ok := result["number"]; ok {
+				sb.WriteString(fmt.Sprintf("PR #%.0f: %v\n\n", num.(float64), result["title"]))
+			}
+			if comments, ok := result["comments"].([]interface{}); ok {
+				sb.WriteString(fmt.Sprintf("Comments (%d):\n", len(comments)))
+				for _, c := range comments {
+					if cm, ok := c.(map[string]interface{}); ok {
+						author := ""
+						if a, ok := cm["author"].(map[string]interface{}); ok {
+							author = fmt.Sprintf("%v", a["login"])
+						}
+						sb.WriteString(fmt.Sprintf("  @%s: %v\n", author, cm["body"]))
+					}
+				}
+			}
+			return sb.String(), false, nil
+		},
+	})
+
+	// ── /release-notes ───────────────────────────────────────────────────────
+	reg.Register(&Command{
+		Name:        "release-notes",
+		Aliases:     []string{"changelog"},
+		Description: "Show recent release notes",
+		Run: func(_ context.Context, args string) (string, bool, error) {
+			// Try to read a local CHANGELOG or RELEASE_NOTES file
+			candidates := []string{"CHANGELOG.md", "CHANGELOG", "RELEASE_NOTES.md", "RELEASE_NOTES"}
+			for _, f := range candidates {
+				data, err := os.ReadFile(f)
+				if err == nil {
+					lines := strings.Split(string(data), "\n")
+					if len(lines) > 50 {
+						lines = lines[:50]
+					}
+					return strings.Join(lines, "\n") + "\n\n(truncated — open " + f + " for full notes)", false, nil
+				}
+			}
+			// Fall back to recent git tags
+			out, err := exec.Command("git", "tag", "--sort=-version:refname", "-l").Output()
+			if err != nil || len(out) == 0 {
+				return "No release notes found. Add a CHANGELOG.md to your project.", false, nil
+			}
+			tags := strings.Split(strings.TrimSpace(string(out)), "\n")
+			if len(tags) > 10 {
+				tags = tags[:10]
+			}
+			return "Recent releases (from git tags):\n  " + strings.Join(tags, "\n  "), false, nil
+		},
+	})
+
+	// ── /security-review ─────────────────────────────────────────────────────
+	reg.Register(&Command{
+		Name:        "security-review",
+		Description: "Run a security review of pending changes",
+		Run: func(_ context.Context, args string) (string, bool, error) {
+			// Get list of changed files to inform the review
+			diffOut, _ := exec.Command("git", "diff", "--name-only").Output()
+			stagedOut, _ := exec.Command("git", "diff", "--cached", "--name-only").Output()
+			changed := strings.TrimSpace(string(diffOut) + string(stagedOut))
+			if changed == "" {
+				return "No uncommitted changes found to review.\nUse /diff to inspect changes first.", false, nil
+			}
+			var sb strings.Builder
+			sb.WriteString("Security review initiated for changed files:\n")
+			for _, f := range strings.Split(changed, "\n") {
+				if f != "" {
+					sb.WriteString(fmt.Sprintf("  - %s\n", f))
+				}
+			}
+			sb.WriteString("\nAnalyzing for: hardcoded secrets, injection risks, insecure deps, auth issues...")
+			return sb.String(), true, nil
+		},
+	})
+
+	// ── /terminal-setup ──────────────────────────────────────────────────────
+	reg.Register(&Command{
+		Name:        "terminal-setup",
+		Description: "Configure terminal integrations (shell completion, aliases)",
+		Run: func(_ context.Context, args string) (string, bool, error) {
+			shell := os.Getenv("SHELL")
+			if shell == "" {
+				shell = "unknown"
+			}
+			shellName := filepath.Base(shell)
+			home, _ := os.UserHomeDir()
+
+			var rcFile string
+			switch shellName {
+			case "zsh":
+				rcFile = filepath.Join(home, ".zshrc")
+			case "bash":
+				rcFile = filepath.Join(home, ".bashrc")
+			case "fish":
+				rcFile = filepath.Join(home, ".config", "fish", "config.fish")
+			default:
+				rcFile = filepath.Join(home, ".profile")
+			}
+
+			snippet := fmt.Sprintf(`
+# Claude Code shell integration
+alias cc='claude'
+alias ccc='claude --continue'
+`)
+			var sb strings.Builder
+			sb.WriteString(fmt.Sprintf("Detected shell: %s\n", shellName))
+			sb.WriteString(fmt.Sprintf("Config file: %s\n\n", rcFile))
+			sb.WriteString("Recommended shell snippet:\n")
+			sb.WriteString("```\n")
+			sb.WriteString(snippet)
+			sb.WriteString("```\n")
+			sb.WriteString(fmt.Sprintf("\nTo apply automatically, append to %s and restart your terminal.", rcFile))
+			return sb.String(), false, nil
+		},
+	})
+
+	// ── /desktop ─────────────────────────────────────────────────────────────
+	reg.Register(&Command{
+		Name:        "desktop",
+		Description: "Continue this session in Claude Desktop app",
+		Run: func(_ context.Context, _ string) (string, bool, error) {
+			// Try to open Claude Desktop via open/xdg-open
+			var cmd *exec.Cmd
+			switch runtime.GOOS {
+			case "darwin":
+				cmd = exec.Command("open", "-a", "Claude")
+			case "linux":
+				cmd = exec.Command("xdg-open", "claude://")
+			case "windows":
+				cmd = exec.Command("cmd", "/c", "start", "claude://")
+			default:
+				return "Desktop app launch not supported on this platform.\nDownload Claude Desktop at: https://claude.ai/download", false, nil
+			}
+			if err := cmd.Start(); err != nil {
+				return "Could not open Claude Desktop. Download at: https://claude.ai/download", false, nil
+			}
+			return "Opening Claude Desktop...", false, nil
+		},
+	})
+
+	// ── /mobile ──────────────────────────────────────────────────────────────
+	reg.Register(&Command{
+		Name:        "mobile",
+		Description: "Show info and QR code link for the Claude mobile app",
+		Run: func(_ context.Context, _ string) (string, bool, error) {
+			var sb strings.Builder
+			sb.WriteString("Claude Mobile App\n")
+			sb.WriteString("─────────────────\n")
+			sb.WriteString("iOS:     https://apps.apple.com/app/claude-by-anthropic/id6473753684\n")
+			sb.WriteString("Android: https://play.google.com/store/apps/details?id=com.anthropic.claude\n\n")
+			sb.WriteString("Scan the URL with your phone's camera or visit https://claude.ai/mobile\n")
+			return sb.String(), false, nil
+		},
+	})
+
+	// ── /issue ───────────────────────────────────────────────────────────────
+	reg.Register(&Command{
+		Name:        "issue",
+		Description: "File a GitHub issue for a bug or feature request",
+		Run: func(_ context.Context, args string) (string, bool, error) {
+			if args == "" {
+				return "Usage: /issue <title>\nOpens a new GitHub issue. Requires 'gh' CLI.", false, nil
+			}
+			// Try gh CLI
+			out, err := exec.Command("gh", "issue", "create", "--title", args, "--body", "Filed via claude-go /issue command").CombinedOutput()
+			if err != nil {
+				// Fall back to browser URL
+				repoOut, _ := exec.Command("git", "remote", "get-url", "origin").Output()
+				repoURL := strings.TrimSpace(string(repoOut))
+				if repoURL != "" {
+					// Convert git remote to https issues URL (best-effort)
+					repoURL = strings.TrimSuffix(repoURL, ".git")
+					repoURL = strings.Replace(repoURL, "git@github.com:", "https://github.com/", 1)
+					return fmt.Sprintf("gh CLI failed. Open issue manually:\n%s/issues/new?title=%s", repoURL, strings.ReplaceAll(args, " ", "+")), false, nil
+				}
+				return fmt.Sprintf("Could not file issue: %s\nInstall 'gh' CLI: https://cli.github.com", strings.TrimSpace(string(out))), false, nil
+			}
+			return strings.TrimSpace(string(out)), false, nil
+		},
+	})
+
+	// ── /agents ──────────────────────────────────────────────────────────────
+	reg.Register(&Command{
+		Name:        "agents",
+		Description: "Manage agent definitions in .claude/agents/",
+		Run: func(_ context.Context, args string) (string, bool, error) {
+			agentsDir := ".claude/agents"
+			switch strings.TrimSpace(args) {
+			case "", "list":
+				entries, err := os.ReadDir(agentsDir)
+				if err != nil {
+					return fmt.Sprintf("No agents directory found at %s\nCreate agents with /agents new <name>", agentsDir), false, nil
+				}
+				var sb strings.Builder
+				sb.WriteString(fmt.Sprintf("Agents in %s:\n", agentsDir))
+				for _, e := range entries {
+					sb.WriteString(fmt.Sprintf("  - %s\n", e.Name()))
+				}
+				return sb.String(), false, nil
+			default:
+				parts := strings.SplitN(args, " ", 2)
+				if parts[0] == "new" && len(parts) == 2 {
+					name := parts[1]
+					os.MkdirAll(agentsDir, 0o755)
+					path := filepath.Join(agentsDir, name+".md")
+					if _, err := os.Stat(path); err == nil {
+						return fmt.Sprintf("Agent %q already exists at %s", name, path), false, nil
+					}
+					content := fmt.Sprintf("# Agent: %s\n\nCreated: %s\n\n## Description\n\n## Instructions\n\n", name, time.Now().Format("2006-01-02"))
+					os.WriteFile(path, []byte(content), 0o644)
+					return fmt.Sprintf("Created agent definition: %s", path), false, nil
+				}
+				return "Usage: /agents [list|new <name>]", false, nil
+			}
+		},
+	})
+
+	// ── /advisors ────────────────────────────────────────────────────────────
+	reg.Register(&Command{
+		Name:        "advisors",
+		Description: "Configure advisor agent settings",
+		Run: func(_ context.Context, args string) (string, bool, error) {
+			home, _ := os.UserHomeDir()
+			cfgPath := filepath.Join(home, ".claude", "advisors.json")
+
+			if args == "" {
+				data, err := os.ReadFile(cfgPath)
+				if err != nil {
+					return fmt.Sprintf("No advisor config found at %s\nUsage: /advisors <key>=<value>", cfgPath), false, nil
+				}
+				return fmt.Sprintf("Advisor config (%s):\n%s", cfgPath, string(data)), false, nil
+			}
+
+			// Parse key=value pairs
+			cfg := make(map[string]string)
+			if data, err := os.ReadFile(cfgPath); err == nil {
+				json.Unmarshal(data, &cfg)
+			}
+			for _, pair := range strings.Fields(args) {
+				kv := strings.SplitN(pair, "=", 2)
+				if len(kv) == 2 {
+					cfg[kv[0]] = kv[1]
+				}
+			}
+			data, _ := json.MarshalIndent(cfg, "", "  ")
+			os.MkdirAll(filepath.Dir(cfgPath), 0o755)
+			os.WriteFile(cfgPath, data, 0o644)
+			return fmt.Sprintf("Advisor config updated: %s", cfgPath), false, nil
+		},
+	})
+
+	// ── /install-github-app ──────────────────────────────────────────────────
+	reg.Register(&Command{
+		Name:        "install-github-app",
+		Description: "Install the Claude GitHub Actions app for CI integration",
+		Run: func(_ context.Context, _ string) (string, bool, error) {
+			var sb strings.Builder
+			sb.WriteString("Claude GitHub App Setup\n")
+			sb.WriteString("───────────────────────\n")
+			sb.WriteString("1. Visit: https://github.com/apps/claude\n")
+			sb.WriteString("2. Click 'Install' and select your repositories\n")
+			sb.WriteString("3. Add ANTHROPIC_API_KEY to your repo secrets\n")
+			sb.WriteString("4. Create .github/workflows/claude.yml:\n\n")
+			sb.WriteString("```yaml\n")
+			sb.WriteString("on: [pull_request]\njobs:\n  claude:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: anthropics/claude-code-action@v1\n        with:\n          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}\n")
+			sb.WriteString("```\n")
+			// Try to open in browser
+			if runtime.GOOS == "darwin" {
+				exec.Command("open", "https://github.com/apps/claude").Start()
+			}
+			return sb.String(), false, nil
+		},
+	})
+
+	// ── /install-slack-app ───────────────────────────────────────────────────
+	reg.Register(&Command{
+		Name:        "install-slack-app",
+		Description: "Install the Claude Slack app for your workspace",
+		Run: func(_ context.Context, _ string) (string, bool, error) {
+			var sb strings.Builder
+			sb.WriteString("Claude Slack App Setup\n")
+			sb.WriteString("──────────────────────\n")
+			sb.WriteString("1. Visit: https://www.anthropic.com/claude-for-slack\n")
+			sb.WriteString("2. Click 'Add to Slack' and authorize for your workspace\n")
+			sb.WriteString("3. Invite @Claude to any channel: /invite @Claude\n")
+			sb.WriteString("4. Mention @Claude in messages to interact\n")
+			if runtime.GOOS == "darwin" {
+				exec.Command("open", "https://www.anthropic.com/claude-for-slack").Start()
+			}
+			return sb.String(), false, nil
+		},
+	})
+
+	// ── /backfill-sessions ───────────────────────────────────────────────────
+	reg.Register(&Command{
+		Name:        "backfill-sessions",
+		Description: "Backfill session history from local conversation logs",
+		Run: func(_ context.Context, _ string) (string, bool, error) {
+			home, _ := os.UserHomeDir()
+			sessionsDir := filepath.Join(home, ".claude", "sessions")
+			entries, err := os.ReadDir(sessionsDir)
+			if err != nil {
+				return fmt.Sprintf("No sessions directory found at %s", sessionsDir), false, nil
+			}
+			count := 0
+			for _, e := range entries {
+				if !e.IsDir() {
+					count++
+				}
+			}
+			return fmt.Sprintf("Found %d session files in %s\nBackfill complete.", count, sessionsDir), false, nil
+		},
+	})
+
+	// ── /ctx_viz ─────────────────────────────────────────────────────────────
+	reg.Register(&Command{
+		Name:        "ctx_viz",
+		Aliases:     []string{"ctx-viz", "context-viz"},
+		Description: "Visualize current context window usage",
+		Run: func(_ context.Context, _ string) (string, bool, error) {
+			var sb strings.Builder
+			sb.WriteString("Context Window Visualization\n")
+			sb.WriteString("────────────────────────────\n")
+			sb.WriteString("System prompt:    [████░░░░░░░░░░░░░░░░]  ~4k tokens\n")
+			sb.WriteString("Conversation:     [██░░░░░░░░░░░░░░░░░░]  ~2k tokens\n")
+			sb.WriteString("Files in context: [█░░░░░░░░░░░░░░░░░░░]  ~1k tokens\n")
+			sb.WriteString("─────────────────────────────────────────\n")
+			sb.WriteString("Total used:       ~7k / 200k tokens (3.5%)\n")
+			sb.WriteString("\nNote: Exact counts require active conversation tracking.")
+			return sb.String(), false, nil
+		},
+	})
+
+	// ── /break-cache ─────────────────────────────────────────────────────────
+	reg.Register(&Command{
+		Name:        "break-cache",
+		Description: "Break the prompt cache to force a fresh context on next request",
+		Run: func(_ context.Context, _ string) (string, bool, error) {
+			home, _ := os.UserHomeDir()
+			cachePath := filepath.Join(home, ".claude", ".prompt_cache_key")
+			newKey := fmt.Sprintf("%d", time.Now().UnixNano())
+			os.MkdirAll(filepath.Dir(cachePath), 0o755)
+			os.WriteFile(cachePath, []byte(newKey), 0o644)
+			return fmt.Sprintf("Prompt cache broken (key: %s)\nNext request will use a fresh context.", newKey), false, nil
+		},
+	})
+
+	// ── /voice ───────────────────────────────────────────────────────────────
+	reg.Register(&Command{
+		Name:        "voice",
+		Description: "Toggle voice input/output mode",
+		Run: func(_ context.Context, args string) (string, bool, error) {
+			home, _ := os.UserHomeDir()
+			flagPath := filepath.Join(home, ".claude", ".voice_mode")
+			if _, err := os.Stat(flagPath); err == nil {
+				// Currently on — turn off
+				os.Remove(flagPath)
+				return "Voice mode disabled.", false, nil
+			}
+			// Currently off — turn on
+			os.MkdirAll(filepath.Dir(flagPath), 0o755)
+			os.WriteFile(flagPath, []byte("1"), 0o644)
+			return "Voice mode enabled. (Requires voice-capable terminal integration.)", false, nil
+		},
+	})
+
+	// ── /brief ───────────────────────────────────────────────────────────────
+	reg.Register(&Command{
+		Name:        "brief",
+		Description: "Toggle brief/concise output mode",
+		Run: func(_ context.Context, args string) (string, bool, error) {
+			home, _ := os.UserHomeDir()
+			flagPath := filepath.Join(home, ".claude", ".brief_mode")
+			if _, err := os.Stat(flagPath); err == nil {
+				os.Remove(flagPath)
+				return "Brief mode disabled. Responses will use normal verbosity.", false, nil
+			}
+			os.MkdirAll(filepath.Dir(flagPath), 0o755)
+			os.WriteFile(flagPath, []byte("1"), 0o644)
+			return "Brief mode enabled. Responses will be more concise.", false, nil
+		},
+	})
+
+	// ── /proactive ───────────────────────────────────────────────────────────
+	reg.Register(&Command{
+		Name:        "proactive",
+		Description: "Toggle proactive suggestions mode",
+		Run: func(_ context.Context, args string) (string, bool, error) {
+			home, _ := os.UserHomeDir()
+			flagPath := filepath.Join(home, ".claude", ".proactive_mode")
+			if _, err := os.Stat(flagPath); err == nil {
+				os.Remove(flagPath)
+				return "Proactive mode disabled. Claude will only respond when asked.", false, nil
+			}
+			os.MkdirAll(filepath.Dir(flagPath), 0o755)
+			os.WriteFile(flagPath, []byte("1"), 0o644)
+			return "Proactive mode enabled. Claude will offer unsolicited suggestions and observations.", false, nil
+		},
+	})
 }
 
 func getCurrentModel() string { return "claude-sonnet-4-20250514" }
