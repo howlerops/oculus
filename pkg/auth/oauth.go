@@ -18,11 +18,17 @@ import (
 )
 
 const (
-	AuthorizationEndpoint = "https://console.anthropic.com/oauth/authorize"
-	TokenEndpoint         = "https://console.anthropic.com/oauth/token"
-	ClientID              = "claude-code"
+	// Production OAuth endpoints - from old-src/constants/oauth.ts PROD_OAUTH_CONFIG
+	AuthorizationEndpoint = "https://platform.claude.com/oauth/authorize"
+	ClaudeAIAuthorizeURL  = "https://claude.com/cai/oauth/authorize"
+	TokenEndpoint         = "https://platform.claude.com/v1/oauth/token"
+	APIKeyEndpoint        = "https://api.anthropic.com/api/oauth/claude_cli/create_api_key"
+	SuccessURL            = "https://platform.claude.com/oauth/code/success?app=claude-code"
+	ManualRedirectURL     = "https://platform.claude.com/oauth/code/callback"
+	ClientID              = "9d1c250a-e61b-44d9-88ed-5944d1962f5e"
 	RedirectPath          = "/oauth/callback"
-	DefaultScopes         = "user:inference user:profile"
+	DefaultScopes         = "org:create_api_key user:profile user:inference user:sessions:claude_code user:mcp_servers user:file_upload"
+	OAuthBetaHeader       = "oauth-2025-04-20"
 )
 
 // OAuthTokens holds the token pair
