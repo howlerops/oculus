@@ -1,0 +1,87 @@
+{
+  "title": "Full Tool & Service Implementation",
+  "stories": [
+    {
+      "id": "IMPL-001",
+      "title": "Core Tools Batch 1: Agent, WebFetch, WebSearch, AskUser",
+      "priority": 1,
+      "passes": false,
+      "acceptanceCriteria": [
+        "AgentTool spawns a goroutine running its own QueryEngine with isolated context, supports model/run_in_background params",
+        "WebFetchTool fetches URLs via net/http, converts HTML to markdown (using html-to-markdown or regex), returns content",
+        "WebSearchTool delegates to Anthropic server-side web_search tool via API, returns results with URLs",
+        "AskUserQuestionTool passes questions through and returns answers from permission check (pass-through pattern)",
+        "go build ./... succeeds"
+      ]
+    },
+    {
+      "id": "IMPL-002",
+      "title": "Core Tools Batch 2: TodoWrite, ToolSearch, Config, Sleep",
+      "priority": 2,
+      "passes": false,
+      "acceptanceCriteria": [
+        "TodoWriteTool manages a todo list in AppState, supports status updates, clears when all complete",
+        "ToolSearchTool implements keyword scoring (name match +10, hint match +4, desc match +2) and select: mode",
+        "ConfigTool reads/writes settings.json values by dotted key path",
+        "SleepTool sleeps for specified duration with context cancellation support",
+        "go build ./... succeeds"
+      ]
+    },
+    {
+      "id": "IMPL-003",
+      "title": "Task Tools: Create, Get, Update, List, Stop, Output",
+      "priority": 3,
+      "passes": false,
+      "acceptanceCriteria": [
+        "TaskCreateTool creates a task in AppState with generated ID and returns task info",
+        "TaskGetTool retrieves task state by ID from AppState",
+        "TaskUpdateTool updates task status/description in AppState",
+        "TaskListTool returns all tasks with status filtering",
+        "TaskStopTool kills a running task by ID",
+        "TaskOutputTool reads task output from disk file",
+        "go build ./... succeeds"
+      ]
+    },
+    {
+      "id": "IMPL-004",
+      "title": "Orchestration Tools: Skill, Plan, Worktree, Team",
+      "priority": 4,
+      "passes": false,
+      "acceptanceCriteria": [
+        "SkillTool loads and executes skill markdown files from .claude/skills/ directory",
+        "EnterPlanModeTool/ExitPlanModeTool toggle plan mode flag in AppState",
+        "EnterWorktreeTool creates a git worktree, ExitWorktreeTool cleans it up",
+        "TeamCreateTool/TeamDeleteTool/SendMessageTool manage team state and inter-agent messaging",
+        "go build ./... succeeds"
+      ]
+    },
+    {
+      "id": "IMPL-005",
+      "title": "Remaining Tools: Notebook, MCP, Cron, Brief, PowerShell, REPL, etc.",
+      "priority": 5,
+      "passes": false,
+      "acceptanceCriteria": [
+        "NotebookEditTool parses/edits .ipynb JSON (replace/insert/delete cells)",
+        "MCPTool/ListMcpResources/ReadMcpResource/McpAuth delegate to MCP client",
+        "CronTools create/list/delete scheduled tasks",
+        "BriefTool toggles brief output mode",
+        "PowerShellTool executes PowerShell commands (Windows-aware)",
+        "REPLTool runs code in a persistent REPL session",
+        "RemoteTriggerTool/SyntheticOutputTool implemented",
+        "go build ./... succeeds"
+      ]
+    },
+    {
+      "id": "IMPL-006",
+      "title": "Advanced Services: Analytics, Plugin System, Bridge",
+      "priority": 6,
+      "passes": false,
+      "acceptanceCriteria": [
+        "pkg/services/analytics/ implements event logging with telemetry sink",
+        "pkg/services/plugins/ implements plugin loading, discovery, and management",
+        "pkg/services/bridge/ implements remote session bridge with WebSocket transport",
+        "go build ./... succeeds"
+      ]
+    }
+  ]
+}

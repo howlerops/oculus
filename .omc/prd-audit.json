@@ -1,0 +1,63 @@
+{
+  "title": "1:1 Port Audit - Gap Analysis and Fill",
+  "description": "File-by-file audit of old-src/ TypeScript against Go port, filling critical gaps",
+  "stories": [
+    {
+      "id": "AUDIT-001",
+      "title": "Gap Analysis - Map every TS module to Go",
+      "priority": 1,
+      "passes": false,
+      "acceptanceCriteria": [
+        "Every top-level directory in old-src/ has been audited",
+        "A gap report lists every TS module with its Go counterpart or 'MISSING'",
+        "Critical vs non-critical gaps are categorized"
+      ]
+    },
+    {
+      "id": "AUDIT-002",
+      "title": "Fill Critical Gaps - hooks system",
+      "priority": 2,
+      "passes": false,
+      "acceptanceCriteria": [
+        "pkg/hooks/ exists with hook execution engine matching old-src/hooks/",
+        "PreToolUse, PostToolUse, SessionStart hook events supported",
+        "go build ./... succeeds"
+      ]
+    },
+    {
+      "id": "AUDIT-003",
+      "title": "Fill Critical Gaps - constants and common utilities",
+      "priority": 3,
+      "passes": false,
+      "acceptanceCriteria": [
+        "pkg/constants/ exists with message constants, XML tags, product info matching old-src/constants/",
+        "pkg/utils/array/, pkg/utils/format/, pkg/utils/bash/ exist with core utility functions",
+        "go build ./... succeeds"
+      ]
+    },
+    {
+      "id": "AUDIT-004",
+      "title": "Fill Critical Gaps - entrypoints and QueryEngine",
+      "priority": 4,
+      "passes": false,
+      "acceptanceCriteria": [
+        "pkg/entrypoints/ exists with SDK/print/headless entrypoint types",
+        "QueryEngine in pkg/query/ handles system prompt assembly, compact triggers, and tool result budgeting",
+        "go build ./... succeeds"
+      ]
+    },
+    {
+      "id": "AUDIT-005",
+      "title": "Build and Run - End-to-End Verification",
+      "priority": 5,
+      "passes": false,
+      "acceptanceCriteria": [
+        "go build -o /tmp/claude-go ./cmd/claude-go/ succeeds",
+        "Binary runs with ANTHROPIC_API_KEY set and -p 'What is 2+2?' returns a valid response",
+        "Binary handles missing API key gracefully with clear error message",
+        "All go test ./... pass",
+        "go vet ./... reports zero issues"
+      ]
+    }
+  ]
+}

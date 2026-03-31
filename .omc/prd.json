@@ -1,0 +1,299 @@
+{
+  "title": "TypeScript-to-Go 1:1 Port of Claude Code CLI",
+  "description": "Migrate the entire old-src/ TypeScript codebase to idiomatic Go packages for drastically improved memory efficiency. The Go port preserves all functionality: types, API client, query engine, tools, commands, TUI, services, and state management.",
+  "stories": [
+    {
+      "id": "US-001",
+      "title": "Go Module Init & Core Types",
+      "priority": 1,
+      "passes": true,
+      "acceptanceCriteria": [
+        "go.mod exists at project root with module path github.com/jbeck018/claude-go",
+        "pkg/types/message.go defines Message, UserMessage, AssistantMessage, SystemMessage, ToolUseMessage structs matching old-src/types/message.ts",
+        "pkg/types/permissions.go defines PermissionMode, PermissionBehavior, PermissionRule, PermissionResult types matching old-src/types/permissions.ts",
+        "pkg/types/ids.go defines SessionId and AgentId branded string types with constructor functions matching old-src/types/ids.ts",
+        "pkg/types/tools.go defines ToolProgressData, BashProgress, AgentToolProgress types matching old-src/types/tools.ts",
+        "pkg/types/hooks.go defines HookProgress, PromptRequest, PromptResponse matching old-src/types/hooks.ts",
+        "go build ./... succeeds with zero errors"
+      ]
+    },
+    {
+      "id": "US-002",
+      "title": "Tool Interface & Task System",
+      "priority": 2,
+      "passes": true,
+      "acceptanceCriteria": [
+        "pkg/tool/tool.go defines Tool interface with Call, Description, InputSchema, CheckPermissions, IsReadOnly, IsConcurrencySafe methods matching old-src/Tool.ts",
+        "pkg/tool/registry.go defines Tools type (slice of Tool) with FindByName, FilterEnabled helper functions",
+        "pkg/task/task.go defines TaskType, TaskStatus, TaskState, TaskContext types matching old-src/Task.ts",
+        "pkg/task/task.go implements GenerateTaskId with prefix-based IDs matching the TS implementation",
+        "pkg/task/task.go implements IsTerminalTaskStatus matching the TS logic",
+        "go build ./... succeeds with zero errors",
+        "go test ./pkg/task/... passes with tests for GenerateTaskId and IsTerminalTaskStatus"
+      ]
+    },
+    {
+      "id": "US-003",
+      "title": "Configuration & Settings System",
+      "priority": 3,
+      "passes": true,
+      "acceptanceCriteria": [
+        "pkg/config/settings.go defines SettingsJson struct matching the shape from old-src/utils/settings/types.ts",
+        "pkg/config/loader.go implements LoadSettings reading from ~/.claude/settings.json with JSON unmarshaling",
+        "pkg/config/config.go implements GetGlobalConfig and SaveGlobalConfig matching old-src/utils/config.ts",
+        "pkg/config/env.go implements environment variable helpers (IsEnvTruthy, IsBareMode) matching old-src/utils/envUtils.ts",
+        "go build ./... succeeds with zero errors",
+        "go test ./pkg/config/... passes"
+      ]
+    },
+    {
+      "id": "US-004",
+      "title": "Anthropic API Client with Streaming",
+      "priority": 4,
+      "passes": true,
+      "acceptanceCriteria": [
+        "pkg/api/client.go implements AnthropicClient with Create method for messages API",
+        "pkg/api/streaming.go implements SSE streaming parser that yields StreamEvent types matching old-src/types/message.ts (content_block_start, content_block_delta, message_stop, etc.)",
+        "pkg/api/auth.go implements API key loading from environment and config matching old-src/utils/auth.ts patterns",
+        "pkg/api/errors.go defines error types for rate limiting, prompt too long, and API errors matching old-src/services/api/errors.ts",
+        "pkg/api/retry.go implements exponential backoff retry with jitter matching old-src/services/api/withRetry.ts",
+        "go build ./... succeeds with zero errors",
+        "go test ./pkg/api/... passes with mock server tests for streaming"
+      ]
+    },
+    {
+      "id": "US-005",
+      "title": "Application State Management",
+      "priority": 5,
+      "passes": true,
+      "acceptanceCriteria": [
+        "pkg/state/appstate.go defines AppState struct with fields matching old-src/state/AppStateStore.ts (messages, tasks, toolPermissionContext, settings, etc.)",
+        "pkg/state/store.go implements thread-safe Store with Get/Set/Update using sync.RWMutex",
+        "pkg/state/selectors.go implements key selector functions matching old-src/state/selectors.ts",
+        "go build ./... succeeds with zero errors",
+        "go test ./pkg/state/... passes with concurrent access tests"
+      ]
+    },
+    {
+      "id": "US-006",
+      "title": "Context Building (System & User Prompts)",
+      "priority": 6,
+      "passes": true,
+      "acceptanceCriteria": [
+        "pkg/context/system.go implements GetSystemContext matching old-src/context.ts (git status, branch, recent commits)",
+        "pkg/context/user.go implements GetUserContext matching old-src/context.ts (CLAUDE.md loading, date injection)",
+        "pkg/context/claudemd.go implements CLAUDE.md file discovery and loading matching old-src/utils/claudemd.ts",
+        "pkg/context/git.go implements git helpers (GetBranch, GetDefaultBranch, GetIsGit, GetGitStatus) matching old-src/utils/git.ts",
+        "go build ./... succeeds with zero errors",
+        "go test ./pkg/context/... passes"
+      ]
+    },
+    {
+      "id": "US-007",
+      "title": "Core Tools - BashTool",
+      "priority": 7,
+      "passes": true,
+      "acceptanceCriteria": [
+        "pkg/tools/bash/bash.go implements BashTool satisfying the Tool interface",
+        "BashTool executes shell commands via os/exec with configurable timeout matching old-src/tools/BashTool/BashTool.ts",
+        "BashTool captures stdout/stderr and returns ToolResult matching the TS output format",
+        "BashTool implements permission checking (IsReadOnly returns false, CheckPermissions validates against allow/deny rules)",
+        "BashTool supports background execution via run_in_background parameter",
+        "go build ./... succeeds with zero errors",
+        "go test ./pkg/tools/bash/... passes with tests for command execution, timeout, and background mode"
+      ]
+    },
+    {
+      "id": "US-008",
+      "title": "Core Tools - FileReadTool, FileWriteTool, FileEditTool",
+      "priority": 8,
+      "passes": true,
+      "acceptanceCriteria": [
+        "pkg/tools/fileread/fileread.go implements FileReadTool with offset/limit parameters matching old-src/tools/FileReadTool/FileReadTool.ts",
+        "FileReadTool outputs content with line numbers (cat -n format) matching TS behavior",
+        "pkg/tools/filewrite/filewrite.go implements FileWriteTool matching old-src/tools/FileWriteTool/FileWriteTool.ts",
+        "pkg/tools/fileedit/fileedit.go implements FileEditTool with old_string/new_string/replace_all parameters matching old-src/tools/FileEditTool/FileEditTool.ts",
+        "FileEditTool validates old_string uniqueness and returns error if not unique (unless replace_all)",
+        "All three tools implement proper permission checking",
+        "go build ./... succeeds with zero errors",
+        "go test ./pkg/tools/fileread/... ./pkg/tools/filewrite/... ./pkg/tools/fileedit/... all pass"
+      ]
+    },
+    {
+      "id": "US-009",
+      "title": "Core Tools - GlobTool & GrepTool",
+      "priority": 9,
+      "passes": true,
+      "acceptanceCriteria": [
+        "pkg/tools/glob/glob.go implements GlobTool with pattern matching using doublestar library, matching old-src/tools/GlobTool/GlobTool.ts",
+        "GlobTool returns matching file paths sorted by modification time",
+        "pkg/tools/grep/grep.go implements GrepTool that shells out to ripgrep (rg) matching old-src/tools/GrepTool/GrepTool.ts",
+        "GrepTool supports output_mode (content, files_with_matches, count), context lines (-A/-B/-C), head_limit, and case-insensitive search",
+        "Both tools are marked as read-only and concurrency-safe",
+        "go build ./... succeeds with zero errors",
+        "go test ./pkg/tools/glob/... ./pkg/tools/grep/... all pass"
+      ]
+    },
+    {
+      "id": "US-010",
+      "title": "Query Engine (Main Conversation Loop)",
+      "priority": 10,
+      "passes": true,
+      "acceptanceCriteria": [
+        "pkg/query/engine.go implements QueryEngine with RunQuery method matching old-src/query.ts core loop",
+        "QueryEngine streams API responses, dispatches tool calls, collects results, and re-submits",
+        "QueryEngine handles concurrent tool execution for concurrency-safe tools",
+        "QueryEngine implements message normalization for API submission matching old-src/utils/messages.ts normalizeMessagesForAPI",
+        "QueryEngine handles interruption (abort signal) gracefully",
+        "go build ./... succeeds with zero errors",
+        "go test ./pkg/query/... passes"
+      ]
+    },
+    {
+      "id": "US-011",
+      "title": "Command System & Slash Commands",
+      "priority": 11,
+      "passes": true,
+      "acceptanceCriteria": [
+        "pkg/commands/command.go defines Command interface matching old-src/types/command.ts",
+        "pkg/commands/registry.go implements command registration and lookup by name/prefix",
+        "pkg/commands/help.go implements /help command",
+        "pkg/commands/compact.go implements /compact command for context compaction",
+        "pkg/commands/clear.go implements /clear command",
+        "pkg/commands/cost.go implements /cost command for token usage display",
+        "go build ./... succeeds with zero errors"
+      ]
+    },
+    {
+      "id": "US-012",
+      "title": "Terminal UI with Bubbletea",
+      "priority": 12,
+      "passes": true,
+      "acceptanceCriteria": [
+        "pkg/tui/app.go implements the main bubbletea Model with Init/Update/View matching the REPL flow from old-src/screens/",
+        "pkg/tui/input.go implements multi-line text input with history matching old-src input handling",
+        "pkg/tui/message_view.go renders conversation messages (user, assistant, tool use/result) matching old-src/components/ rendering",
+        "pkg/tui/spinner.go implements animated spinner for in-progress operations",
+        "The TUI accepts user input, sends to QueryEngine, and streams responses",
+        "go build ./... succeeds with zero errors"
+      ]
+    },
+    {
+      "id": "US-013",
+      "title": "CLI Entry Point & Flags",
+      "priority": 13,
+      "passes": true,
+      "acceptanceCriteria": [
+        "cmd/claude-go/main.go implements CLI entry point using cobra matching old-src/main.tsx flag parsing",
+        "Supports flags: --model, --permission-mode, --verbose, --debug, --print, --add-dir, --allowedTools, --disallowedTools",
+        "Supports subcommands matching old-src commander setup (at minimum: claude-go, claude-go -p 'prompt')",
+        "Non-interactive (print) mode works: echo 'hello' | claude-go -p sends prompt and prints response",
+        "Interactive REPL mode launches the bubbletea TUI",
+        "go build ./cmd/claude-go/... produces a working binary",
+        "The binary starts and can complete a simple API round-trip"
+      ]
+    },
+    {
+      "id": "US-014",
+      "title": "AgentTool (Subagent Spawning)",
+      "priority": 14,
+      "passes": true,
+      "acceptanceCriteria": [
+        "pkg/tools/agent/agent.go implements AgentTool that spawns subagent goroutines matching old-src/tools/AgentTool/AgentTool.ts",
+        "Subagents run their own QueryEngine with isolated context",
+        "AgentTool supports model parameter for routing to different models",
+        "AgentTool supports run_in_background for async execution",
+        "Agent definitions are loaded from .claude/agents/ directory matching old-src/tools/AgentTool/loadAgentsDir.ts",
+        "go build ./... succeeds with zero errors"
+      ]
+    },
+    {
+      "id": "US-015",
+      "title": "MCP Client Integration",
+      "priority": 15,
+      "passes": true,
+      "acceptanceCriteria": [
+        "pkg/services/mcp/client.go implements MCP client that connects to stdio-based MCP servers",
+        "pkg/services/mcp/types.go defines MCPServerConnection, ServerResource types matching old-src/services/mcp/types.ts",
+        "MCP client can list tools from connected servers and expose them as Tool instances",
+        "MCP client handles tool calls by forwarding to the appropriate server",
+        "MCP server configuration is loaded from settings.json mcpServers field",
+        "go build ./... succeeds with zero errors"
+      ]
+    },
+    {
+      "id": "US-016",
+      "title": "Remaining Tools Port",
+      "priority": 16,
+      "passes": true,
+      "acceptanceCriteria": [
+        "pkg/tools/websearch/ implements WebSearchTool matching old-src/tools/WebSearchTool/",
+        "pkg/tools/webfetch/ implements WebFetchTool matching old-src/tools/WebFetchTool/",
+        "pkg/tools/notebook/ implements NotebookEditTool matching old-src/tools/NotebookEditTool/",
+        "pkg/tools/lsp/ implements LSPTool matching old-src/tools/LSPTool/",
+        "pkg/tools/todowrite/ implements TodoWriteTool matching old-src/tools/TodoWriteTool/",
+        "pkg/tools/toolsearch/ implements ToolSearchTool matching old-src/tools/ToolSearchTool/",
+        "pkg/tools/askuser/ implements AskUserQuestionTool matching old-src/tools/AskUserQuestionTool/",
+        "pkg/tools/task/ implements TaskCreate, TaskGet, TaskUpdate, TaskList, TaskStop, TaskOutput tools",
+        "pkg/tools/plan/ implements EnterPlanMode, ExitPlanMode tools",
+        "pkg/tools/worktree/ implements EnterWorktree, ExitWorktree tools",
+        "pkg/tools/team/ implements TeamCreate, TeamDelete, SendMessage tools",
+        "pkg/tools/skill/ implements SkillTool matching old-src/tools/SkillTool/",
+        "go build ./... succeeds with zero errors"
+      ]
+    },
+    {
+      "id": "US-017",
+      "title": "Remaining Commands Port",
+      "priority": 17,
+      "passes": true,
+      "acceptanceCriteria": [
+        "All slash commands from old-src/commands/ are ported to pkg/commands/",
+        "At minimum: /commit, /review, /diff, /config, /mcp, /resume, /session, /status, /tasks, /vim, /theme, /login, /logout, /doctor, /memory, /init, /context, /copy, /share, /rename, /color, /ide, /keybindings",
+        "go build ./... succeeds with zero errors"
+      ]
+    },
+    {
+      "id": "US-018",
+      "title": "Services Port (Analytics, Compact, Cost Tracking)",
+      "priority": 18,
+      "passes": true,
+      "acceptanceCriteria": [
+        "pkg/services/compact/ implements context compaction matching old-src/services/compact/",
+        "pkg/services/cost/ implements cost tracking matching old-src/cost-tracker.ts",
+        "pkg/services/history/ implements conversation history matching old-src/history.ts",
+        "pkg/utils/log/ implements logging matching old-src/utils/log.ts",
+        "go build ./... succeeds with zero errors"
+      ]
+    },
+    {
+      "id": "US-019",
+      "title": "Utilities Port",
+      "priority": 19,
+      "passes": true,
+      "acceptanceCriteria": [
+        "pkg/utils/messages/ implements message creation and normalization matching old-src/utils/messages.ts",
+        "pkg/utils/permissions/ implements permission checking logic matching old-src/utils/permissions/",
+        "pkg/utils/filestate/ implements file state cache matching old-src/utils/fileStateCache.ts",
+        "pkg/utils/theme/ implements terminal theming matching old-src/utils/theme.ts",
+        "pkg/utils/platform/ implements platform detection matching old-src/utils/platform.ts",
+        "go build ./... succeeds with zero errors"
+      ]
+    },
+    {
+      "id": "US-020",
+      "title": "Integration Test & Memory Benchmark",
+      "priority": 20,
+      "passes": true,
+      "acceptanceCriteria": [
+        "End-to-end test: binary starts, accepts a prompt via -p flag, streams a response, and exits cleanly",
+        "End-to-end test: REPL mode starts, renders TUI, and handles Ctrl+C gracefully",
+        "Memory benchmark: Go binary RSS at idle is <50MB (vs typical Node.js ~150MB+)",
+        "Memory benchmark: Go binary RSS during a 10-turn conversation stays <200MB",
+        "All go test ./... pass across the entire project",
+        "go vet ./... reports zero issues",
+        "Binary size is <30MB"
+      ]
+    }
+  ]
+}

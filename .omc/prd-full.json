@@ -1,0 +1,116 @@
+{
+  "title": "Complete 1:1 Go Port - All Remaining Modules",
+  "stories": [
+    {
+      "id": "FULL-001",
+      "title": "OAuth PKCE Login Flow + Keychain Storage",
+      "priority": 1,
+      "passes": false,
+      "acceptanceCriteria": [
+        "pkg/auth/oauth.go implements PKCE code challenge generation (S256)",
+        "pkg/auth/oauth.go implements local HTTP callback server on random port",
+        "pkg/auth/oauth.go opens browser to authorization URL with PKCE params",
+        "pkg/auth/oauth.go exchanges auth code for tokens via POST",
+        "pkg/auth/oauth.go implements token refresh flow",
+        "pkg/auth/keychain.go stores/retrieves API keys and OAuth tokens via macOS security CLI",
+        "pkg/auth/keychain.go falls back to plaintext file storage on non-macOS",
+        "pkg/auth/auth.go implements GetAPIKey chain: env var -> keychain -> config file -> prompt login",
+        "go build ./... succeeds"
+      ]
+    },
+    {
+      "id": "FULL-002",
+      "title": "Login/Logout Commands + Trust Dialog",
+      "priority": 2,
+      "passes": false,
+      "acceptanceCriteria": [
+        "pkg/commands/login.go implements /login command that triggers OAuth flow",
+        "pkg/commands/logout.go implements /logout that clears stored tokens",
+        "pkg/auth/trust.go implements first-run trust dialog checking hasAcceptedTrustDialog in config",
+        "pkg/auth/onboarding.go implements first-run onboarding flow (welcome message, accept terms)",
+        "go build ./... succeeds"
+      ]
+    },
+    {
+      "id": "FULL-003",
+      "title": "Session Persistence + Resume",
+      "priority": 3,
+      "passes": false,
+      "acceptanceCriteria": [
+        "pkg/services/sessions/sessions.go saves conversations to ~/.claude/conversations/<id>.json",
+        "pkg/services/sessions/sessions.go loads previous conversations by ID",
+        "pkg/services/sessions/sessions.go lists recent sessions with metadata",
+        "pkg/commands/resume.go implements /resume command to continue a previous session",
+        "pkg/commands/session.go implements /session command to show current session info",
+        "go build ./... succeeds"
+      ]
+    },
+    {
+      "id": "FULL-004",
+      "title": "Full System Prompt Builder",
+      "priority": 4,
+      "passes": false,
+      "acceptanceCriteria": [
+        "pkg/context/systemprompt.go builds the complete system prompt matching old-src/utils/systemPrompt.ts",
+        "System prompt includes: identity, environment info, tool descriptions, CLAUDE.md content, git status",
+        "pkg/context/systemprompt.go uses cache_control ephemeral blocks for prompt caching",
+        "Tool descriptions are dynamically generated from registered tools' Prompt() methods",
+        "go build ./... succeeds"
+      ]
+    },
+    {
+      "id": "FULL-005",
+      "title": "Remaining TS Modules: hooks UI, screens, keybindings, vim",
+      "priority": 5,
+      "passes": false,
+      "acceptanceCriteria": [
+        "pkg/hooks/ui.go implements React-hook equivalents as Go callbacks for UI state (useTerminalSize, useInput, etc.)",
+        "pkg/tui/screens.go implements screen routing (chat, settings, resume chooser)",
+        "pkg/tui/keybindings.go implements configurable keybindings from ~/.claude/keybindings.json",
+        "pkg/tui/vim.go implements vim mode with motions, operators, text objects",
+        "go build ./... succeeds"
+      ]
+    },
+    {
+      "id": "FULL-006",
+      "title": "Remaining TS Modules: bridge, components, services",
+      "priority": 6,
+      "passes": false,
+      "acceptanceCriteria": [
+        "pkg/services/bridge/session.go implements full remote session bridge with WebSocket transport",
+        "pkg/tui/components/ has Go equivalents for key UI components (message view, spinner, permission dialog, input box)",
+        "pkg/services/api/ implements the full API layer (withRetry, errors, bootstrap, rate limiting)",
+        "pkg/services/compact/autocompact.go implements automatic compaction with token threshold detection",
+        "go build ./... succeeds"
+      ]
+    },
+    {
+      "id": "FULL-007",
+      "title": "Remaining TS Modules: constants, entrypoints, skills, memdir, migrations",
+      "priority": 7,
+      "passes": false,
+      "acceptanceCriteria": [
+        "pkg/constants/ has all constant files matching old-src/constants/ (oauth, product, messages, betas, keys, xml, toolLimits, apiLimits, system)",
+        "pkg/entrypoints/ has SDK, print, headless, MCP entrypoint implementations",
+        "pkg/skills/ implements built-in skill loading and execution from .claude/skills/",
+        "pkg/memdir/ implements memory directory (auto-memory) management",
+        "pkg/migrations/ implements data migration framework",
+        "go build ./... succeeds"
+      ]
+    },
+    {
+      "id": "FULL-008",
+      "title": "Wire Everything Together + End-to-End Test",
+      "priority": 8,
+      "passes": false,
+      "acceptanceCriteria": [
+        "cmd/claude-go/main.go wires auth flow: checks keychain -> env var -> prompts login on first run",
+        "Binary starts with no API key and shows login prompt instead of error",
+        "All go test ./... pass",
+        "go vet ./... reports zero issues",
+        "Binary size remains <15MB",
+        "find old-src/ -maxdepth 1 -type d shows every directory has a Go pkg counterpart"
+      ]
+    }
+  ]
+}

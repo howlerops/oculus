@@ -1,0 +1,16 @@
+# Binaries
+claude-go
+/tmp/claude-go
+
+# OS
+.DS_Store
+
+# OMC state (keep audit files)
+.omc/state/
+.omc/artifacts/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
