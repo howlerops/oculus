@@ -10,8 +10,8 @@ import (
 	"sort"
 	"time"
 
-	"github.com/jbeck018/claude-go/pkg/config"
-	"github.com/jbeck018/claude-go/pkg/types"
+	"github.com/howlerops/oculus/pkg/config"
+	"github.com/howlerops/oculus/pkg/types"
 )
 
 type SessionMetadata struct {
@@ -30,7 +30,7 @@ type SavedSession struct {
 }
 
 func GetSessionsDir() string {
-	return filepath.Join(config.GetClaudeConfigDir(), "conversations")
+	return filepath.Join(config.GetOculusDir(), "conversations")
 }
 
 func GenerateSessionID() string {

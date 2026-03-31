@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
-	apptask "github.com/jbeck018/claude-go/pkg/task"
-	"github.com/jbeck018/claude-go/pkg/tool"
-	"github.com/jbeck018/claude-go/pkg/types"
+	apptask "github.com/howlerops/oculus/pkg/task"
+	"github.com/howlerops/oculus/pkg/tool"
+	"github.com/howlerops/oculus/pkg/types"
 )
 
 // TaskCreateTool creates background tasks

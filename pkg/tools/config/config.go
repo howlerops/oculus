@@ -7,9 +7,9 @@ import (
 	"os"
 	"strings"
 
-	appconfig "github.com/jbeck018/claude-go/pkg/config"
-	"github.com/jbeck018/claude-go/pkg/tool"
-	"github.com/jbeck018/claude-go/pkg/types"
+	appconfig "github.com/howlerops/oculus/pkg/config"
+	"github.com/howlerops/oculus/pkg/tool"
+	"github.com/howlerops/oculus/pkg/types"
 )
 
 type ConfigTool struct {

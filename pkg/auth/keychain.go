@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	KeychainService = "claude-code"
+	KeychainService = "oculus"
 	KeychainAccount = "oauth-tokens"
 	APIKeyAccount   = "api-key"
 )
@@ -76,7 +76,7 @@ type FileStorage struct{}
 
 func (f *FileStorage) storagePath(account string) string {
 	home, _ := os.UserHomeDir()
-	return filepath.Join(home, ".claude", "credentials", account+".json")
+	return filepath.Join(home, ".oculus", "credentials", account+".json")
 }
 
 func (f *FileStorage) Get(account string) (string, error) {
@@ -126,5 +126,23 @@ func SaveAPIKey(storage SecureStorage, key string) error {
 
 // LoadAPIKey retrieves an API key from secure storage
 func LoadAPIKey(storage SecureStorage) (string, error) {
-	return storage.Get(APIKeyAccount)
+	key, err := storage.Get(APIKeyAccount)
+	if err != nil || key == "" {
+		// Try legacy "claude-code" service
+		key, err = loadLegacyKeychain(APIKeyAccount)
+	}
+	return key, err
+}
+
+// loadLegacyKeychain reads from the old "claude-code" keychain service for migration
+func loadLegacyKeychain(account string) (string, error) {
+	cmd := exec.Command("security", "find-generic-password",
+		"-s", "claude-code",
+		"-a", account,
+		"-w")
+	out, err := cmd.Output()
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimSpace(string(out)), nil
 }

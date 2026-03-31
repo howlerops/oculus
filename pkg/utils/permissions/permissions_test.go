@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/jbeck018/claude-go/pkg/types"
+	"github.com/howlerops/oculus/pkg/types"
 )
 
 func defaultCtx() types.ToolPermissionContext {

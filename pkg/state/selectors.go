@@ -1,8 +1,8 @@
 package state
 
 import (
-	"github.com/jbeck018/claude-go/pkg/task"
-	"github.com/jbeck018/claude-go/pkg/types"
+	"github.com/howlerops/oculus/pkg/task"
+	"github.com/howlerops/oculus/pkg/types"
 )
 
 // GetRunningTasks returns all tasks that are currently running

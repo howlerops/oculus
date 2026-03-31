@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/jbeck018/claude-go/pkg/types"
+	"github.com/howlerops/oculus/pkg/types"
 )
 
 // CompactOptions controls how compaction works

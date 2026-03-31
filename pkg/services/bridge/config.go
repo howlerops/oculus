@@ -4,7 +4,7 @@ import (
 	"os"
 	"strconv"
 
-	appconfig "github.com/jbeck018/claude-go/pkg/config"
+	appconfig "github.com/howlerops/oculus/pkg/config"
 )
 
 const (

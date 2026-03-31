@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/jbeck018/claude-go/pkg/config"
+	"github.com/howlerops/oculus/pkg/config"
 )
 
 // CheckTrustDialog ensures the user has accepted the trust dialog.
@@ -17,7 +17,7 @@ func CheckTrustDialog() bool {
 		return true
 	}
 
-	fmt.Println("Welcome to Claude Code (Go Edition)!")
+	fmt.Println("Welcome to Oculus!")
 	fmt.Println()
 	fmt.Println("Before we begin, please note:")
 	fmt.Println("  - Claude Code can execute commands on your computer")
@@ -50,7 +50,7 @@ func CheckOnboarding() {
 
 	fmt.Println()
 	fmt.Println("  Claude Code - AI Coding Assistant")
-	fmt.Println("  Powered by Claude (Anthropic)")
+	fmt.Println("  Powered by Anthropic Claude")
 	fmt.Println()
 	fmt.Println("  Quick tips:")
 	fmt.Println("  - Type your request and press Enter")

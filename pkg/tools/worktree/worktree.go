@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/jbeck018/claude-go/pkg/tool"
-	"github.com/jbeck018/claude-go/pkg/types"
+	"github.com/howlerops/oculus/pkg/tool"
+	"github.com/howlerops/oculus/pkg/types"
 )
 
 type EnterWorktreeTool struct {
@@ -41,7 +41,7 @@ func (t *EnterWorktreeTool) Call(_ context.Context, input map[string]interface{}
 		branch = fmt.Sprintf("worktree-%d", os.Getpid())
 	}
 
-	worktreePath := filepath.Join(os.TempDir(), "claude-go-worktree-"+branch)
+	worktreePath := filepath.Join(os.TempDir(), "oculus-worktree-"+branch)
 	cmd := exec.Command("git", "worktree", "add", "-b", branch, worktreePath)
 	out, err := cmd.CombinedOutput()
 	if err != nil {

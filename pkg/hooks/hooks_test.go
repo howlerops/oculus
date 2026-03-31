@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/jbeck018/claude-go/pkg/types"
+	"github.com/howlerops/oculus/pkg/types"
 )
 
 func TestNewRegistry(t *testing.T) {

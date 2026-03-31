@@ -127,7 +127,7 @@ func (c *Client) Connect(ctx context.Context, name string, cfg ServerConfig) (*S
 		"protocolVersion": "2024-11-05",
 		"capabilities":    map[string]interface{}{},
 		"clientInfo": map[string]interface{}{
-			"name":    "claude-go",
+			"name":    "oculus",
 			"version": "0.1.0",
 		},
 	})

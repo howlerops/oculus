@@ -9,8 +9,8 @@ import (
 	"strings"
 
 	"github.com/bmatcuk/doublestar/v4"
-	"github.com/jbeck018/claude-go/pkg/tool"
-	"github.com/jbeck018/claude-go/pkg/types"
+	"github.com/howlerops/oculus/pkg/tool"
+	"github.com/howlerops/oculus/pkg/types"
 )
 
 type GlobTool struct {
@@ -80,7 +80,7 @@ func (t *GlobTool) Call(_ context.Context, input map[string]interface{}, _ func(
 		}
 
 		// Skip hidden directories (except .claude)
-		if d.IsDir() && strings.HasPrefix(d.Name(), ".") && d.Name() != ".claude" {
+		if d.IsDir() && strings.HasPrefix(d.Name(), ".") && d.Name() != ".oculus" {
 			return filepath.SkipDir
 		}
 

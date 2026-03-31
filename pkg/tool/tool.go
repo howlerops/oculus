@@ -3,7 +3,7 @@ package tool
 import (
 	"context"
 
-	"github.com/jbeck018/claude-go/pkg/types"
+	"github.com/howlerops/oculus/pkg/types"
 )
 
 // InputSchema defines the JSON Schema for a tool's input

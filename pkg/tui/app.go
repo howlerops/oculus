@@ -9,17 +9,17 @@ import (
 	"github.com/charmbracelet/bubbles/textarea"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/jbeck018/claude-go/pkg/query"
-	"github.com/jbeck018/claude-go/pkg/types"
+	"github.com/howlerops/oculus/pkg/query"
+	"github.com/howlerops/oculus/pkg/types"
 )
 
 // Styles
 var (
-	userStyle      = lipgloss.NewStyle().Foreground(lipgloss.Color("12")).Bold(true)
-	assistantStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("10"))
-	toolStyle      = lipgloss.NewStyle().Foreground(lipgloss.Color("8")).Italic(true)
-	errorStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("9"))
-	headerStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("5")).Bold(true)
+	userStyle      = lipgloss.NewStyle().Foreground(lipgloss.Color("#0ea5e9")).Bold(true)  // sky blue
+	assistantStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#22d3ee"))             // cyan
+	toolStyle      = lipgloss.NewStyle().Foreground(lipgloss.Color("#64748b")).Italic(true) // slate
+	errorStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("#ef4444"))              // red
+	headerStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("#0ea5e9")).Bold(true)   // sky blue
 )
 
 // ResponseMsg is sent when the query engine finishes
@@ -186,7 +186,7 @@ func (m Model) View() string {
 	var sb strings.Builder
 
 	// Header
-	sb.WriteString(headerStyle.Render("Claude Code (Go Edition)"))
+	sb.WriteString(headerStyle.Render("Oculus"))
 	sb.WriteString("\n\n")
 
 	// Messages

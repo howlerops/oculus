@@ -1,0 +1,867 @@
+- generic [ref=e3]:
+  - navigation [ref=e4]:
+    - generic [ref=e5]:
+      - link "Random Labs" [ref=e6] [cursor=pointer]:
+        - /url: /
+        - img "Random Labs" [ref=e7]
+      - list [ref=e9]:
+        - listitem [ref=e10]:
+          - link "home" [ref=e11] [cursor=pointer]:
+            - /url: /
+        - listitem [ref=e12]:
+          - link "blog" [ref=e13] [cursor=pointer]:
+            - /url: /blog
+        - listitem [ref=e14]:
+          - link "about" [ref=e15] [cursor=pointer]:
+            - /url: /about
+        - listitem [ref=e16]:
+          - link "changelog" [ref=e17] [cursor=pointer]:
+            - /url: /changelog
+        - listitem [ref=e18]:
+          - link "ack" [ref=e19] [cursor=pointer]:
+            - /url: /ack
+        - listitem [ref=e20]:
+          - button "products ▾" [ref=e21]
+        - listitem [ref=e22]:
+          - link "docs ↗" [ref=e24] [cursor=pointer]:
+            - /url: https://docs.randomlabs.ai
+          - generic [ref=e25]:
+            - generic [ref=e26]: "|"
+            - link "login ↗" [ref=e27] [cursor=pointer]:
+              - /url: https://dashboard.randomlabs.ai
+    - paragraph [ref=e28]: ←→ enter
+  - main [ref=e29]:
+    - article [ref=e30]:
+      - generic [ref=e32]:
+        - generic [ref=e33]:
+          - generic [ref=e37]:
+            - 'heading "Slate: moving beyond ReAct and RLM" [level=1] [ref=e38]'
+            - generic [ref=e39]:
+              - time [ref=e40]: 2026-03-09
+              - generic [ref=e41]: ·
+              - generic [ref=e42]: Random Labs Team
+              - generic [ref=e43]: ·
+              - generic [ref=e44]:
+                - generic [ref=e45]: research
+                - generic [ref=e46]: architecture
+          - generic [ref=e47]:
+            - heading "Introduction" [level=2] [ref=e48]:
+              - link [ref=e49] [cursor=pointer]:
+                - /url: "#section-0"
+                - text: "#"
+              - text: Introduction
+            - paragraph [ref=e50]: In this technical report, we introduce a new agent architecture pattern, and demonstrate how single-threaded agents can generalize beyond ReAct and RLM.
+            - paragraph [ref=e51]: Our goal at Random Labs is to build generalized, non-benchmaxxed, end-to-end agents for software engineering. The contents of this report bring us one step closer to this goal.
+            - paragraph [ref=e52]: "We begin by examining a series of problems faced by modern LLM based agents: long horizon tasks, strategy vs tactics, and working context management. We explore existing solutions to these problems and their limitations. After enumerating the problems faced by modern agents, we describe Slate's architecture: a thread-based episodic memory system that solves all of them simultaneously."
+            - heading "Background" [level=2] [ref=e53]:
+              - link [ref=e54] [cursor=pointer]:
+                - /url: "#section-1"
+                - text: "#"
+              - text: Background
+            - paragraph [ref=e55]: "Building agents that generalize requires solving three compounding problems: long-horizon task execution, the balance between strategic and tactical reasoning, and working memory management. Each of these is tractable in isolation — the difficulty is that they interact."
+            - heading "Understanding long horizon tasks" [level=3] [ref=e56]:
+              - link [ref=e57] [cursor=pointer]:
+                - /url: "#section-2"
+                - text: "#"
+              - text: Understanding long horizon tasks
+            - paragraph [ref=e58]:
+              - text: Long-horizon tasks are path-dependent (tasks where the required actions depend on each other), and the minimum number of steps to succeed exceeds what a minimal harness can do. A minimal harness is defined here as a limited tool-calling loop around a model with no additional planning or memory infrastructure. Terminus and Simple Codex both fall into this category while most agents you actually use to get work done do not.
+              - superscript [ref=e59]:
+                - link "[4]" [ref=e60] [cursor=pointer]:
+                  - /url: "#ref-4"
+              - superscript [ref=e61]:
+                - link "[5]" [ref=e62] [cursor=pointer]:
+                  - /url: "#ref-5"
+            - paragraph [ref=e63]: "In order to solve this type of task, the agent requires three things: adequate working memory so the model can attend to the right context at the right time, a balance of strategic and tactical execution so the model both plans well and executes correctly, and the ability to integrate new information discovered throughout the task without losing track of the overall goal."
+            - heading "Working memory" [level=3] [ref=e64]:
+              - link [ref=e65] [cursor=pointer]:
+                - /url: "#section-3"
+                - text: "#"
+              - text: Working memory
+            - paragraph [ref=e66]:
+              - text: Models cannot attend uniformly across their context window. The model's ability to attend to the information degrades as the context length grows. The usable portion, up to but not including the degraded region, is working memory. Dex Horthy coined the term "Dumb Zone" for the part of the context window where retrieval quality drops.
+              - superscript [ref=e67]:
+                - link "[6]" [ref=e68] [cursor=pointer]:
+                  - /url: "#ref-6"
+              - text: Working memory is effectively the context window up to that point.
+              - superscript [ref=e69]:
+                - link "[25]" [ref=e70] [cursor=pointer]:
+                  - /url: "#ref-25"
+            - figure "Context windows are not uniformly usable. The right edge — the Dumb Zone — degrades in attention quality as the window fills up." [ref=e71]:
+              - paragraph [ref=e72]: Context Window & Dumb Zone
+              - img "Context window and Dumb Zone diagram" [ref=e73]:
+                - generic [ref=e78]: Working Memory
+                - generic [ref=e79]: Dumb Zone
+                - generic [ref=e80]: attention degrades
+                - generic [ref=e82]: Context Window
+              - generic [ref=e83]: Context windows are not uniformly usable. The right edge — the Dumb Zone — degrades in attention quality as the window fills up.
+            - figure "All four frontier models degrade non-uniformly as input length grows, even on simple tasks. Via Hong, Troynikov & Huber — Context Rot (Chroma, 2025)." [ref=e84]:
+              - paragraph [ref=e85]:
+                - text: Performance Degradation vs. Input Length
+                - superscript [ref=e86]:
+                  - link "[24]" [ref=e87] [cursor=pointer]:
+                    - /url: "#ref-24"
+              - 'img "Context Rot: model performance vs input length across Claude Sonnet 4, GPT-4.1, Qwen3-32B, and Gemini 2.5 Flash — performance degrades non-uniformly as context grows."'
+              - generic [ref=e88]: All four frontier models degrade non-uniformly as input length grows, even on simple tasks. Via Hong, Troynikov & Huber — Context Rot (Chroma, 2025).
+            - heading "Strategy and Tactics" [level=3] [ref=e89]:
+              - link [ref=e90] [cursor=pointer]:
+                - /url: "#section-4"
+                - text: "#"
+              - text: Strategy and Tactics
+            - paragraph [ref=e91]:
+              - text: Strategy is open-ended planning based on knowledge that guides the system towards the goal, and tactics are learned, local action sequences which help materially take steps towards the goal. It's serendipitous that this distinction maps directly onto how RL has historically solved games like go and chess. In chess, traditional engines like Stockfish brute force through a move tree (a sort of tactic based search algorithm)
+              - superscript [ref=e92]:
+                - link "[16]" [ref=e93] [cursor=pointer]:
+                  - /url: "#ref-16"
+              - text: . In contrast, self-play RL has yielded systems that learn which positions matter strategically.
+            - blockquote [ref=e94]:
+              - paragraph [ref=e95]:
+                - text: "\"In several games AlphaZero sacrificed pieces for long-term strategic advantage, suggesting that it has a more fluid, context-dependent positional evaluation than the rule-based evaluations used by previous chess programs.\""
+                - superscript [ref=e96]:
+                  - link "[11]" [ref=e97] [cursor=pointer]:
+                    - /url: "#ref-11"
+            - figure "Brute force evaluates every node at every depth. Value/policy guided search uses the value network to judge positions strategically and the policy network to select moves tactically — exploring far fewer nodes to reach stronger play." [ref=e98]:
+              - paragraph [ref=e99]: Brute Force vs. Value / Policy Execution
+              - img "Brute force tree search vs value and policy guided execution" [ref=e100]:
+                - generic [ref=e102]: Brute Force
+                - generic [ref=e103]: exhaustive tree search (Stockfish)
+                - generic [ref=e127]: every node evaluated at every depth
+                - generic [ref=e129]: Value / Policy
+                - generic [ref=e130]: guided search (AlphaZero)
+                - generic [ref=e149]: "policy: move selection (tactics)"
+                - generic [ref=e150]: "value: pruned (strategy)"
+              - generic [ref=e151]: Brute force evaluates every node at every depth. Value/policy guided search uses the value network to judge positions strategically and the policy network to select moves tactically — exploring far fewer nodes to reach stronger play.
+            - paragraph [ref=e152]:
+              - text: "Go makes the separation even more explicit: strategy covers influence, territory balance, and whole-board thinking, while tactics cover reading (calculating specific local sequences) and life-and-death problems. When DeepMind built AlphaGo, this split was literally architected in: the value network handles positional judgment (strategy) while the policy network handles move selection (tactics)."
+              - superscript [ref=e153]:
+                - link "[14]" [ref=e154] [cursor=pointer]:
+                  - /url: "#ref-14"
+              - text: Research probing AlphaZero's internal representations during training found that tactical concepts — material value — are learned first, followed by strategic concepts like king safety and mobility. They emerge separately, at different training stages, in different layers of the network.
+              - superscript [ref=e155]:
+                - link "[12]" [ref=e156] [cursor=pointer]:
+                  - /url: "#ref-12"
+            - figure [ref=e157]:
+              - paragraph [ref=e158]: "AlphaZero: Concept Emergence by Training Stage"
+              - img "AlphaZero concept emergence timeline by training stage" [ref=e159]:
+                - generic [ref=e161]: training steps
+                - generic [ref=e162]: "0"
+                - generic [ref=e163]: 16k–32k
+                - generic [ref=e164]: 32k–64k
+                - generic [ref=e165]: 128k+
+                - generic [ref=e167]: material value & space
+                - generic [ref=e169]: king safety, threats, mobility
+                - generic [ref=e171]: sophisticated trade-offs
+                - generic [ref=e172]: tactical
+                - generic [ref=e173]: strategic (positional)
+                - generic [ref=e174]: strategic (long-horizon)
+                - generic [ref=e175]: concepts become linearly decodable from network activations around layer d=10 of 20, then plateau
+            - blockquote [ref=e176]:
+              - paragraph [ref=e177]:
+                - text: "\"...piece value is a keystone concept, developed first. Subsequently, issues around mobility (king safety, attack, and defense) arise. Finally, there is a refinement stage, in which the network learns to make sophisticated trade-offs..\""
+                - superscript [ref=e178]:
+                  - link "[12]" [ref=e179] [cursor=pointer]:
+                    - /url: "#ref-12"
+            - figure "Concept emergence in AlphaZero during self-play training. Tactical concepts (material, space) are learned within the first 32k steps. Strategic positional concepts (king safety, threats, mobility) emerge at 32k+. Long-horizon trade-off reasoning develops last. McGrath et al., PNAS 2022." [ref=e180]:
+              - 'img "Figure 5 from McGrath et al. (PNAS 2022): Value regression from human-defined concepts over time. (A) Piece value weights converge toward standard values. (B) Material predicts value early in training; mobility and king safety emerge later." [ref=e181]'
+              - generic [ref=e182]: Concept emergence in AlphaZero during self-play training. Tactical concepts (material, space) are learned within the first 32k steps. Strategic positional concepts (king safety, threats, mobility) emerge at 32k+. Long-horizon trade-off reasoning develops last. McGrath et al., PNAS 2022.
+            - paragraph [ref=e183]: The paper's qualitative evaluation by former world champion Vladimir Kramnik confirms the order directly. At 16k steps AlphaZero loses on material; by 32k it has a solid grasp of piece value. The 32k-to-64k leap is dominated by king safety in imbalanced positions. Beyond 128k the gains are in knowing which attacks will succeed — accepting material sacrifices and converting them — rather than in positional or endgame play. Tactical knowledge first, strategic judgment second.
+            - heading "Software Engineering as an open-ended long horizon game" [level=4] [ref=e184]
+            - paragraph [ref=e185]: We see software engineering as a more open ended and infinite game where both strategy and tactics are relevant depending on the task they are applied to. For example, remembering and executing a bash command is a simple tactic. Designing a schema so that it is backwards compatible as it changes is more strategic.
+            - figure "Software engineering tasks span a spectrum. Tactics are immediate and executable; strategy requires reasoning about future states and tradeoffs." [ref=e186]:
+              - paragraph [ref=e187]: Strategy vs. Tactics Spectrum
+              - img "Strategy vs tactics spectrum in software engineering" [ref=e188]:
+                - generic [ref=e191]: Tactical
+                - generic [ref=e192]: Strategic
+                - generic [ref=e194]: run a bash cmd
+                - generic [ref=e196]: write a test suite
+                - generic [ref=e198]: plan a refactor
+                - generic [ref=e200]: design a schema
+              - generic [ref=e201]: Software engineering tasks span a spectrum. Tactics are immediate and executable; strategy requires reasoning about future states and tradeoffs.
+            - paragraph [ref=e202]: This can be seen in the fact that if a model is asked to write a plan or think through a task step by step, it's actually first being given a knowledge retrieval task, and then an agentic execution task. The initial planning/thinking can be viewed as the model retrieving knowledge and strategizing about a path to the solution, and then using tactics to execute the plan.
+            - blockquote [ref=e203]:
+              - paragraph [ref=e204]: A brief aside -- most rules in AGENTS.md files are actually tactical ex. "Never run db commands".
+            - heading "Prior Approaches" [level=2] [ref=e205]:
+              - link [ref=e206] [cursor=pointer]:
+                - /url: "#section-5"
+                - text: "#"
+              - text: Prior Approaches
+            - paragraph [ref=e207]: No existing approach solves all of the above problems simultaneously. Each approach accepts a tradeoff of solving one or two at the expense of the others.
+            - heading "Solving working memory and defeating the Dumb Zone" [level=3] [ref=e208]:
+              - link [ref=e209] [cursor=pointer]:
+                - /url: "#section-6"
+                - text: "#"
+              - text: Solving working memory and defeating the Dumb Zone
+            - paragraph [ref=e210]:
+              - text: The first solution that comes to mind is to compress the context for the model! Surely we can reliably drop irrelevant context periodically and solve our problem. This strategy is known as
+              - emphasis [ref=e211]: compaction
+              - text: .
+            - heading "Compaction" [level=4] [ref=e212]
+            - paragraph [ref=e213]: Compaction is one naive solution to working memory in isolation.
+            - paragraph [ref=e214]: Compaction is largely unsolved. Most “compaction” is actually lossy compression (despite having gotten better).
+            - blockquote [ref=e215]:
+              - paragraph [ref=e216]:
+                - text: "In early 2025 (around may) we built (one of) the first instance(s) of a sliding window based agent that could run for incredibly long session lengths (up to 2 days reported by our users). This agent is deprecated, but is available as an npm package:"
+                - code [ref=e217]: npm i -g @randomlabs/slatecli
+            - paragraph [ref=e218]: "There are a few instances of working but lossy compression in the wild:"
+            - list [ref=e219]:
+              - listitem [ref=e220]: Compaction in claude code (notoriously bad)
+              - listitem [ref=e221]:
+                - text: The now infamous Ralph Wiggum loop by Geoffrey Huntley
+                - superscript [ref=e222]:
+                  - link "[17]" [ref=e223] [cursor=pointer]:
+                    - /url: "#ref-17"
+              - listitem [ref=e224]:
+                - text: Amp handoffs (a crowd favorite, but requiring guidance from the user)
+                - superscript [ref=e225]:
+                  - link "[18]" [ref=e226] [cursor=pointer]:
+                    - /url: "#ref-18"
+            - paragraph [ref=e227]: Amp probably has the most interesting implementation here since a handoff is designed to bootstrap a new fresh agent session.
+            - paragraph [ref=e228]: The main issue with compaction is that it is not deterministically lossy, which means we can unpredictably lose important information.
+            - heading "Subagents" [level=4] [ref=e229]
+            - paragraph [ref=e230]: To avoid the lossiness of compaction, we can instead try to isolate the unimportant context. This is where subagents come in.
+            - paragraph [ref=e231]: Subagents are a second naive solution to working memory in isolation. Subagents work relatively well. They isolate context. This isolation means that the naive implementation fails to transfer information across context boundaries since all it returns is a response message (see codex/claude-code subagents).
+            - heading "Markdown Planning" [level=3] [ref=e232]:
+              - link [ref=e233] [cursor=pointer]:
+                - /url: "#section-7"
+                - text: "#"
+              - text: Markdown Planning
+            - paragraph [ref=e234]: To make sure we maintain coherence across different parts of a task, compactions, and isolated subagent contexts, we can plan upfront.
+            - paragraph [ref=e235]:
+              - text: Markdown plans are also one method of balancing strategy and tactics. By asking a model to plan the task out, it forces the model to use its
+              - emphasis [ref=e236]: knowledge
+              - text: to strategize about the task, which broadly provides a much much better outcome than directly exploiting its own learned behaviors. Giving the model the tactic to track the task progress in the doc allows the model to repeatedly refresh its understanding of its
+              - emphasis [ref=e237]: strategy
+              - text: throughout the task and stay aligned.
+            - paragraph [ref=e238]: As models improve and are trained on this style of strategizing through markdown plans, the tasks the model can complete with just a simple markdown file will necessarily increase in scope. However, there will likely always be a difference between planning v.s. directly exploiting the learned behaviors.
+            - blockquote [ref=e239]:
+              - paragraph [ref=e240]:
+                - text: We can describe this as knowledge overhang. The knowledge that a given model has access to theoretically, but can't access tactically without a trick like "think step by step" or by planning in files.
+                - superscript [ref=e241]:
+                  - link "[22]" [ref=e242] [cursor=pointer]:
+                    - /url: "#ref-22"
+            - figure "Knowledge overhang as a rollout sampling problem. The model's latent knowledge covers a wide range of trajectories through the task space, but direct tactical sampling only accesses a narrow band. Planning, chain-of-thought, and scaffolding expand the sampled region." [ref=e243]:
+              - paragraph [ref=e244]: Knowledge Overhang as Rollout Sampling
+              - img "Knowledge overhang as a 3D manifold surface" [ref=e245]:
+                - generic [ref=e288]: start
+                - generic [ref=e289]: Tactically Accessible
+                - generic [ref=e290]: Knowledge
+                - generic [ref=e291]: Overhang
+                - generic [ref=e292]: Knowledge
+                - generic [ref=e293]: Overhang
+                - generic [ref=e294]: Edge of Model Knowledge
+                - generic [ref=e295]: Edge of Model Knowledge
+                - generic [ref=e296]: Tactically Accessible
+              - generic [ref=e297]: Knowledge overhang as a rollout sampling problem. The model's latent knowledge covers a wide range of trajectories through the task space, but direct tactical sampling only accesses a narrow band. Planning, chain-of-thought, and scaffolding expand the sampled region.
+            - paragraph [ref=e298]: Necessarily, there is a limit to how far this form of planning can go. The limit simply increases as the models get better.
+            - paragraph [ref=e299]:
+              - strong [ref=e300]: "Three key failure modes:"
+            - list [ref=e301]:
+              - listitem [ref=e302]: The model isn’t thorough enough when writing the plan (doesn't specify the plan enough)
+              - listitem [ref=e303]: The model isn’t thorough enough while executing the plan (the model loses the plot and misses pieces of the plan)
+              - listitem [ref=e304]: The model forgets it has free will and it’s learned tactics don’t allow it to adapt to new information (it forgets to update the plan in the right direction)
+            - paragraph [ref=e305]: We’ve probably all seen underspecified plans, which we then ask the model to flesh out further. We’ve also all seen models incompletely execute a plan or declare victory early on a plan before it’s been completed. Additionally in this case, the model has to remember to update the plan when it encounters new information, which isn’t ever a guarantee.
+            - paragraph [ref=e306]: All three failure modes have improved as RL for this form of planning has improved (you can just look at how you’ve used these tools over the past year), however, these failure modes require direct RL to counteract them. As the spend for RL post training increases, the rate of failure for these will decrease for any fixed task complexity but are necessarily non-intuitive for the models (tautologically as evidenced by the need to train for the behavior).
+            - heading "Direct Task Decomposition" [level=3] [ref=e307]:
+              - link [ref=e308] [cursor=pointer]:
+                - /url: "#section-8"
+                - text: "#"
+              - text: Direct Task Decomposition
+            - paragraph [ref=e309]:
+              - text: Markdown plans go stale though, so the next move is to make execution structure mandatory and update it as we go. Frequently this gets implemented as a task tree where the model must work through each node before continuing. This solves the early-stopping problem and can leverage subagent context isolation for thoroughness. (see ADaPT
+              - superscript [ref=e310]:
+                - link "[19]" [ref=e311] [cursor=pointer]:
+                  - /url: "#ref-19"
+              - text: )
+            - paragraph [ref=e312]: In this system, the model will take a main task, spawn subtasks, hopefully execute the subtasks, and then return to complete the main task.
+            - 'figure "Direct task decomposition: a task tree where each node is either executed directly or split into subtasks. Thorough but rigid — adapting to new information requires rewriting the tree." [ref=e313]':
+              - paragraph [ref=e314]: Direct Task Decomposition Tree
+              - img "Task decomposition tree diagram" [ref=e315]:
+                - generic [ref=e317]: main task
+                - generic [ref=e321]: subtask A
+                - generic [ref=e323]: subtask B
+                - generic [ref=e325]: subtask C
+                - generic [ref=e329]: leaf
+                - generic [ref=e331]: leaf
+                - generic [ref=e332]: execute or split
+                - generic [ref=e333]: execute or split
+              - generic [ref=e334]: "Direct task decomposition: a task tree where each node is either executed directly or split into subtasks. Thorough but rigid — adapting to new information requires rewriting the tree."
+            - paragraph [ref=e335]: For additional thoroughness, you can introduce a gating mechanism for the task that requires it to walk through N different steps in order to tag the task as completed.
+            - paragraph [ref=e336]:
+              - strong [ref=e337]: "Two main failure modes:"
+            - list [ref=e338]:
+              - listitem [ref=e339]: The system has a hard time adapting to new information due to linear task dependence
+              - listitem [ref=e340]: The system fails to completely decompose a main task leaving subtasks and their results unintegrated
+            - paragraph [ref=e341]:
+              - text: Verifying this is left as an exercise for the reader (just try it on the
+              - code [ref=e342]: gpt2-codegolf
+              - text: task
+              - superscript [ref=e343]:
+                - link "[20]" [ref=e344] [cursor=pointer]:
+                  - /url: "#ref-20"
+              - text: ), but rigidly walking an agent through a task tree where each task has verification steps and is gated behind a sequence of actions helps to keep an agent on track but does not leave room for the agent to flexibly execute the task.
+            - paragraph [ref=e345]: The main premise with using a tree of gated tasks like this is that you avoid the early stopping failure mode models are prone to, but you end up trading the flexibility of natural language and implicit planning for rigidity in the process.
+            - paragraph [ref=e346]: Intuitively, the dependence on the structured task data is the main culprit here. It's also the driver of the thoroughness.
+            - paragraph [ref=e347]:
+              - text: The rigidity makes the system overall less able to express varied behavior and flexibly handle tasks. We can say the system has low
+              - emphasis [ref=e348]: expressivity
+              - text: .
+            - heading "Expressivity and Inductive Bias" [level=3] [ref=e349]:
+              - link [ref=e350] [cursor=pointer]:
+                - /url: "#section-9"
+                - text: "#"
+              - text: Expressivity and Inductive Bias
+            - paragraph [ref=e351]: An agent harness has high expressivity when it enables many possible end states with relatively few output operations.
+            - paragraph [ref=e352]:
+              - text: To illustrate the expressivity of different tools, consider for example two harnesses. Harness A one has a
+              - code [ref=e353]: file_read
+              - text: tool and Harness B can only use the
+              - code [ref=e354]: sed
+              - text: command. No matter how hard harness A tries, and regardless of the model provided, harness A can never express the action of editing a file. On the other hand, although arguably less token efficient, Harness B is fully capable of reading, writing, searching text, etc. This is a result of the
+              - code [ref=e355]: sed
+              - text: tool's expressivity. As in, you can express a wider variety of operations through a marginally more complex interface.
+            - figure "Expressivity is about reachable behavior space. A more expressive interface unlocks more possible end states from the same model." [ref=e356]:
+              - paragraph [ref=e357]: "Harness Expressivity: Reachable Behavior Space"
+              - img "Expressivity comparison between file_read-only and sed harnesses" [ref=e358]:
+                - generic [ref=e361]: Harness A — file_read only
+                - generic [ref=e362]: Harness B — sed
+                - generic [ref=e363]: ✓ read files
+                - generic [ref=e364]: ✗ write files
+                - generic [ref=e365]: ✗ search text
+                - generic [ref=e366]: ✗ edit in place
+                - generic [ref=e367]: ✓ read files
+                - generic [ref=e368]: ✓ write files
+                - generic [ref=e369]: ✓ search text
+                - generic [ref=e370]: ✓ edit in place
+              - generic [ref=e371]: Expressivity is about reachable behavior space. A more expressive interface unlocks more possible end states from the same model.
+            - paragraph [ref=e372]: The expressivity of a system is important, but so is the ability of the model to use it. The model's ability to use the provided harness is directly dependent on how in-distribution the interface for using that harness is.
+            - paragraph [ref=e373]: "Take, for example, two highly expressive systems: Bash vs. a Python REPL"
+            - paragraph [ref=e374]:
+              - text: The training data for what these things are used for is somewhat different. A harness with a python REPL
+              - emphasis [ref=e375]: will
+              - text: be able to do a lot of the same work as a harness with a Bash shell env. However, how quickly the model completes the desired task will be dependent on the prevalence of the required operations in the training data. For example a task where the agent has to solve issues in a package with c bindings on an ubuntu vm and use the patched package might be more challenging from within a python REPL harness than it would be from within a Bash harness.
+            - paragraph [ref=e376]:
+              - text: There exists a bias in how the model understands how to use these different harnesses despite both of them being
+              - emphasis [ref=e377]: theoretically
+              - text: equally expressive.
+            - paragraph [ref=e378]: The inductive biases of a model, the expressivity of the system, and the sampling method chosen lead to the specific behaviors we observe. As a harness builder, the goal is to make desired behavior the natural behavior.
+            - blockquote [ref=e379]:
+              - paragraph [ref=e380]: "Note: Inductive bias here means the default behaviors a model has been trained to prefer from raw pretraining to rubric post training"
+            - paragraph [ref=e381]:
+              - text: As a harness builder, your job is to design a harness where the system naturally expresses the desired behaviors. The ability for the
+              - emphasis [ref=e382]: system
+              - text: to express the behaviors is dependent on how expressive the harness is and what the model’s inductive biases look like.
+            - paragraph [ref=e383]: "Now, back to the problem of task decomposition: strict task graphs that force the model through steps notably constrain the expressivity of the system."
+            - heading "RLM and Recursive Decomposition" [level=3] [ref=e384]:
+              - link [ref=e385] [cursor=pointer]:
+                - /url: "#section-10"
+                - text: "#"
+              - text: RLM and Recursive Decomposition
+            - paragraph [ref=e386]: Agent systems need a more flexible way to both decompose and execute tasks. RLM is the approach that comes closest to balancing these needs. Instead of forcing a fixed decomposition, it gives the model a Python REPL and the ability to run operations recursively, letting task structure emerge naturally from the model's own reasoning rather than being imposed upfront.
+            - paragraph [ref=e387]:
+              - text: Subcalls (either direct LLM queries or RLM-like subagents) encapsulate context, the REPL allows the model to iteratively adapt to the problem rather than being forced to use it in a fire and forget pattern, the model has massive amounts of data for
+              - emphasis [ref=e388]: scripting
+              - text: in python so it knows the interface and is biased towards using it, context can be passed by reference which maintains the source of truth, and the model has the ability to
+              - emphasis [ref=e389]: naturally
+              - text: decompose the task in an unforced way.
+            - paragraph [ref=e390]: Essentially, task decomposition falls out of just having the right primitives and an interface the model is biased towards using.
+            - paragraph [ref=e391]: Theres one catch.
+            - paragraph [ref=e392]:
+              - text: Notice how the official implementation has a limited depth?
+              - superscript [ref=e393]:
+                - link "[2]" [ref=e394] [cursor=pointer]:
+                  - /url: "#ref-2"
+              - text: It was only discussed with depth=1. When given the ability to
+              - emphasis [ref=e395]: actually
+              - text: recurse (depth=N) the model needs a guard against over decomposition. Not because a model always will, but it can and especially does when tasked with decomposition. Given an interface that offers unbounded decomposition the harness needs an underlying guard against overdecomposition.
+            - paragraph [ref=e396]:
+              - text: "However, there's a second question: how does the system adapt to data it discovers mid-execution? The lack of intermediate results from the REPL means the model has to commit to a full plan for that step upfront and only finds out if it worked at the very end. Imagine solving a maze where you have to blindly guess"
+              - emphasis [ref=e397]: "n"
+              - text: steps into the future. In this world, the only source of feedback you get is where you end up. Theres not much room for course correction especially if the environment is being mutated. You either emerge on the other side or you don't.
+            - figure "Without intermediate feedback, the model must commit to a full sequence of steps — like navigating a maze blind. It only discovers it hit a wall when execution ends. With per-step feedback, it detects the wall immediately and reroutes." [ref=e398]:
+              - paragraph [ref=e399]: Blind N-Step Execution
+              - img "One-shot path commitment vs reactive step-by-step execution" [ref=e400]:
+                - generic [ref=e401]: one-shot
+                - generic [ref=e403]: S
+                - generic [ref=e404]: entire path committed upfront
+                - generic [ref=e406]: unexpected state
+                - generic [ref=e407]: invisible — can't adapt
+                - generic [ref=e411]: only feedback
+                - generic [ref=e412]: reactive
+                - generic [ref=e414]: S
+                - generic [ref=e418]: unexpected state
+                - generic [ref=e419]: seen → adapt
+                - generic [ref=e422]: ✓
+                - generic [ref=e423]: "REPL: no intermediate state visible"
+                - generic [ref=e424]: "ReAct / tool loop: adapts per step"
+              - generic [ref=e425]: Without intermediate feedback, the model must commit to a full sequence of steps — like navigating a maze blind. It only discovers it hit a wall when execution ends. With per-step feedback, it detects the wall immediately and reroutes.
+            - paragraph [ref=e426]:
+              - text: This is what we can describe as a lack of synchronization between the levels of the stack. The ability of the model to offload operations to some system (llm or program) that processes the information
+              - emphasis [ref=e427]: in isolation
+              - text: and returns only the finalized data constrains the main model's ability to adapt to failures encountered while executing its plan (the program in the repl). This is totally fine for reading information from an environment that isn't changing. However, when implementing, this rigidity from the lack of synchronization is problematic at best.
+            - blockquote [ref=e428]: "A brief aside... The above observations, combined with an understanding of deep research agents, should expose a very specific context engineering pattern: stack based isolation works very well for research due to its ability to decompose retrieval tasks into isolated operations on immutable data which can then be synthesized."
+            - paragraph [ref=e429]:
+              - text: Overdecomposition and rigidity are failure modes that ReAct based agents don’t suffer from because the planning and execution happen implicitly, one turn at a time, allowing the model to be flexible and reactive.
+              - superscript [ref=e430]:
+                - link "[21]" [ref=e431] [cursor=pointer]:
+                  - /url: "#ref-21"
+            - paragraph [ref=e432]: Now, at this point everyone who is attempting to build an agent has thought “Hey what if I made a planner agent and then an implementer agent and then a review agent”.
+            - paragraph [ref=e433]:
+              - text: Let me spare you the trouble. It will sort of work, but you’re going to hate its guts while using it. It’s slow, clunky, and has a ton of inertia while working. This is largely a consequence of having a very strict pattern for execution rather than allowing the model to intelligently decide how it should handle the task. This will likely improve benchmark scores, but won’t actually improve your dev experience. Maintaining general expressivity during execution is
+              - emphasis [ref=e434]: incredibly
+              - text: important.
+            - paragraph [ref=e435]:
+              - text: "There are a few agent architectures that operate on this principle: Devin, Manus, Claude Code, and Altera’s project Sid (now"
+              - link "shortcut" [ref=e436] [cursor=pointer]:
+                - /url: https://shortcut.ai/
+              - text: ).
+            - heading "Devin, Manus, and Altera" [level=3] [ref=e437]:
+              - link [ref=e438] [cursor=pointer]:
+                - /url: "#section-11"
+                - text: "#"
+              - text: Devin, Manus, and Altera
+            - paragraph [ref=e439]:
+              - text: Devin, Manus, and Altera's PIANO architecture all fall into a bucket of "plan at a higher level and execute at a lower level" with some way to synchronize system 1 and system 2 thinking to get a long-running agent with persistent state.
+              - superscript [ref=e440]:
+                - link "[7]" [ref=e441] [cursor=pointer]:
+                  - /url: "#ref-7"
+              - superscript [ref=e442]:
+                - link "[8]" [ref=e443] [cursor=pointer]:
+                  - /url: "#ref-8"
+              - superscript [ref=e444]:
+                - link "[9]" [ref=e445] [cursor=pointer]:
+                  - /url: "#ref-9"
+              - superscript [ref=e446]:
+                - link "[10]" [ref=e447] [cursor=pointer]:
+                  - /url: "#ref-10"
+            - paragraph [ref=e448]: They all follow a pattern of strategize with a high level planning agent, delegate to a lower level subagent, reduce the lower level agent context to some compressed representation, and return that formatted context to the higher level agent in order to synchronize the two. Altera's approach additionally allows the agents to do multiple forms of processing simultaneously.
+            - paragraph [ref=e449]: This form of planning is prone to the same type of failure as mentioned above in the task decomposition section or the RLM section where overly strict execution constraints reduce the ability of the system to react to new information and necessarily force the subagent to fail in the same way running a script can fail.
+            - paragraph [ref=e450]: "Synchronous subagents (where the main agent blocks and waits for a subagent result) are more reliable but slow. While asynchronous subagents introduce an additional problem: knowing when and how to reconcile results."
+            - 'figure "The Devin/Manus/Altera pattern: a high-level strategic agent delegates to a lower-level executor, compresses results, and synchronizes back. Every compress boundary risks dropping critical state. Via Lance Martin — Context Engineering in Manus. [10]" [ref=e451]':
+              - paragraph [ref=e452]: "Devin / Manus / Altera: Strategize–Delegate–Compress Cycle"
+              - img "Devin/Manus/Altera strategize-delegate-compress cycle" [ref=e453]:
+                - generic [ref=e455]: 1. Strategize
+                - generic [ref=e457]: 2. Delegate
+                - generic [ref=e459]: 3. Execute
+                - generic [ref=e461]: 4. Compress
+                - generic [ref=e462]: "& Return"
+                - generic [ref=e463]: ↑ context lost here
+              - img "Manus context reduction diagram from Lance Martin's 'Context Engineering in Manus' — showing the full and compact representations of tool results and how stale results are pruned from context." [ref=e464]
+              - generic [ref=e465]:
+                - text: "The Devin/Manus/Altera pattern: a high-level strategic agent delegates to a lower-level executor, compresses results, and synchronizes back. Every compress boundary risks dropping critical state. Via Lance Martin — Context Engineering in Manus."
+                - superscript [ref=e466]:
+                  - link "[10]" [ref=e467] [cursor=pointer]:
+                    - /url: "#ref-10"
+            - heading "Codex and Claude Code" [level=3] [ref=e468]:
+              - link [ref=e469] [cursor=pointer]:
+                - /url: "#section-12"
+                - text: "#"
+              - text: Codex and Claude Code
+            - paragraph [ref=e470]: These are incredibly simple. They delegate work to a subagent using something like a prompt, and the subagent responds back when done.
+            - paragraph [ref=e471]: This approach explicitly introduces a synchronization problem because the main parent is isolated from the child context and has to rely on some sort of message passing (in this case, it’s sending a prompt and receiving a response). This is why originally the subagents ended up being best used just for search since most search operations are exploratory and actually not necessary to retain most context for.
+            - paragraph [ref=e472]: Luckily for the labs, they can just train the models to be good at delegating to subagents and good at being subagents. This is not something to bet against as a harness creator.
+            - paragraph [ref=e473]: Claude unnecessarily defines persistent roles for the subagents, but this is because their approach to synchronization is message passing (which we believe to be incorrect at with a mainthread + subagent architecture given current model behavior, however the models will get better at this because they will be trained for it).
+            - paragraph [ref=e474]: We think single threaded agents have not been solved fully. As an industry, we do not need to move on to teams just yet.
+            - figure "Agent architecture comparison across key system properties. Slate has both the expressivity and reactivity of ReAct alongside the context isolation, parallelism, and compaction that other systems have." [ref=e475]:
+              - paragraph [ref=e476]: Agent Architecture Taxonomy
+              - table [ref=e477]:
+                - rowgroup [ref=e478]:
+                  - row "aspect ReAct Markdown Plan Task Trees RLM Devin / Manus / Altera Claude Code / Codex Slate" [ref=e479]:
+                    - columnheader "aspect" [ref=e480]
+                    - columnheader "ReAct" [ref=e481]
+                    - columnheader "Markdown Plan" [ref=e482]
+                    - columnheader "Task Trees" [ref=e483]
+                    - columnheader "RLM" [ref=e484]
+                    - columnheader "Devin / Manus / Altera" [ref=e485]
+                    - columnheader "Claude Code / Codex" [ref=e486]
+                    - columnheader "Slate" [ref=e487]
+                - rowgroup [ref=e488]:
+                  - row "planning implicit file explicit REPL planning agent plan mode implicit" [ref=e489]:
+                    - cell "planning" [ref=e490]
+                    - cell "implicit" [ref=e491]
+                    - cell "file" [ref=e492]
+                    - cell "explicit" [ref=e493]
+                    - cell "REPL" [ref=e494]
+                    - cell "planning agent" [ref=e495]
+                    - cell "plan mode" [ref=e496]
+                    - cell "implicit" [ref=e497]
+                  - row "decomposition none none direct tree REPL functions task based subagent delegation implicit" [ref=e498]:
+                    - cell "decomposition" [ref=e499]
+                    - cell "none" [ref=e500]
+                    - cell "none" [ref=e501]
+                    - cell "direct tree" [ref=e502]
+                    - cell "REPL functions" [ref=e503]
+                    - cell "task based" [ref=e504]
+                    - cell "subagent delegation" [ref=e505]
+                    - cell "implicit" [ref=e506]
+                  - row "synchronization single thread single thread gated steps REPL return reduce & return message passing episodes" [ref=e507]:
+                    - cell "synchronization" [ref=e508]
+                    - cell "single thread" [ref=e509]
+                    - cell "single thread" [ref=e510]
+                    - cell "gated steps" [ref=e511]
+                    - cell "REPL return" [ref=e512]
+                    - cell "reduce & return" [ref=e513]
+                    - cell "message passing" [ref=e514]
+                    - cell "episodes" [ref=e515]
+                  - row "intermediate feedback per step per step on task failure on execution after compress message passing per episode" [ref=e516]:
+                    - cell "intermediate feedback" [ref=e517]
+                    - cell "per step" [ref=e518]
+                    - cell "per step" [ref=e519]
+                    - cell "on task failure" [ref=e520]
+                    - cell "on execution" [ref=e521]
+                    - cell "after compress" [ref=e522]
+                    - cell "message passing" [ref=e523]
+                    - cell "per episode" [ref=e524]
+                  - row "context isolation N/A N/A per subtask per subcall subagent subagent per thread" [ref=e525]:
+                    - cell "context isolation" [ref=e526]
+                    - cell "N/A" [ref=e527]
+                    - cell "N/A" [ref=e528]
+                    - cell "per subtask" [ref=e529]
+                    - cell "per subcall" [ref=e530]
+                    - cell "subagent" [ref=e531]
+                    - cell "subagent" [ref=e532]
+                    - cell "per thread" [ref=e533]
+                  - row "context compaction N/A N/A Task based REPL Slicing Subagent compress Compaction Episode compress" [ref=e534]:
+                    - cell "context compaction" [ref=e535]
+                    - cell "N/A" [ref=e536]
+                    - cell "N/A" [ref=e537]
+                    - cell "Task based" [ref=e538]
+                    - cell "REPL Slicing" [ref=e539]
+                    - cell "Subagent compress" [ref=e540]
+                    - cell "Compaction" [ref=e541]
+                    - cell "Episode compress" [ref=e542]
+                  - row "parallel execution N/A N/A N/A In REPL Altera only Native Native" [ref=e543]:
+                    - cell "parallel execution" [ref=e544]
+                    - cell "N/A" [ref=e545]
+                    - cell "N/A" [ref=e546]
+                    - cell "N/A" [ref=e547]
+                    - cell "In REPL" [ref=e548]
+                    - cell "Altera only" [ref=e549]
+                    - cell "Native" [ref=e550]
+                    - cell "Native" [ref=e551]
+                  - row "expressivity high high low high medium medium high" [ref=e552]:
+                    - cell "expressivity" [ref=e553]
+                    - cell "high" [ref=e554]
+                    - cell "high" [ref=e555]
+                    - cell "low" [ref=e556]
+                    - cell "high" [ref=e557]
+                    - cell "medium" [ref=e558]
+                    - cell "medium" [ref=e559]
+                    - cell "high" [ref=e560]
+                  - row "adaptability Yes Yes if plan updated No Yes Yes Limited by message passing Yes" [ref=e561]:
+                    - cell "adaptability" [ref=e562]
+                    - cell "Yes" [ref=e563]
+                    - cell "Yes if plan updated" [ref=e564]
+                    - cell "No" [ref=e565]
+                    - cell "Yes" [ref=e566]
+                    - cell "Yes" [ref=e567]
+                    - cell "Limited by message passing" [ref=e568]
+                    - cell "Yes" [ref=e569]
+              - generic [ref=e570]: Agent architecture comparison across key system properties. Slate has both the expressivity and reactivity of ReAct alongside the context isolation, parallelism, and compaction that other systems have.
+            - 'heading "Slate''s Approach: Thread Weaving and Episodes" [level=2] [ref=e571]':
+              - link [ref=e572] [cursor=pointer]:
+                - /url: "#section-13"
+                - text: "#"
+              - text: "Slate's Approach: Thread Weaving and Episodes"
+            - paragraph [ref=e573]: "To summarize what we have covered:"
+            - list [ref=e574]:
+              - listitem [ref=e575]: "Compaction: how to compress an agent trajectory while retaining key information"
+              - listitem [ref=e576]: "Strategic coherence: how to allow an agent to strategize about a problem and stay aligned with that strategy throughout the course of the problem"
+              - listitem [ref=e577]: "Expressivity: designing interfaces that allow the agent to express more complex behaviors"
+              - listitem [ref=e578]: "Task decomposition: how to break down tasks and solve subproblems while maintaining flexibility at the top most level"
+              - listitem [ref=e579]: "Synchronization: how to synchronize work being done throughout the system where the execution contexts are isolated"
+            - paragraph [ref=e580]:
+              - text: "In this section, we propose one architectural primitive for solving these problems: the"
+              - emphasis [ref=e581]: thread
+              - text: . The key insight is that frequent, bounded synchronization between an orchestrator thread and worker threads gives an actually usable balance of speed, latency, and intelligence.
+            - heading "Threads" [level=3] [ref=e582]:
+              - link [ref=e583] [cursor=pointer]:
+                - /url: "#section-14"
+                - text: "#"
+              - text: Threads
+            - paragraph [ref=e584]: "The idea is simple: use a highly expressive interface to access the knowledge overhang in a model, allowing it to strategize about its actions without focusing on implementation tactics. One central orchestration agent delegates actions to worker threads using a highly expressive interface (this can be a tool, a CLI, etc. We chose a DSL due to the flexibility that having access to a programming model gives us). A worker thread executes the action and returns to the main orchestrator."
+            - paragraph [ref=e585]: Sound like a subagent? Not quite.
+            - paragraph [ref=e586]:
+              - text: "Threads are very specifc. Each thread executes one action and when that action is done, it pauses and hands control back to the main thread. You can think of an action like a tactic: Run a command sequence, extract X from file Y, etc. Unlike purpose-specific subagents, threads are general workers that serve the system's current intent. The orchestrator decides what to do next and the thread does it. Normal subagents are persistent, sometimes launched in the background, and synchronize with the main thread (or with eachother) through message passing due to their context isolation. Threads in contrast are only meant to accumulate context acting as a persistent reusable store for that specific work stream, and they don't use message passing as the primary way of communicating with the orchestrator. Instead, every thread action generates a compressed representation of its step history for executing"
+              - emphasis [ref=e587]: just
+              - text: that action sequence. This compressed representation is called an
+              - emphasis [ref=e588]: episode
+              - text: and is directly shared with the main thread.
+            - figure "Subagents each run in their own isolated context and communicate only via message passing. Threads share context explicitly. The orchestrator passes context into each thread, episodes return back, and one thread's episode can become another thread's input." [ref=e589]:
+              - paragraph [ref=e590]: "Threads vs. Subagents: Context Isolation"
+              - 'img "Comparison diagram: subagents each have isolated context bubbles and communicate only via messages; threads explicitly share context — the orchestrator passes context in, episodes come back out" [ref=e591]':
+                - generic [ref=e593]: Subagents
+                - generic [ref=e596]: orch-
+                - generic [ref=e597]: estrator
+                - generic [ref=e600]: sub-
+                - generic [ref=e601]: agent A
+                - generic [ref=e604]: sub-
+                - generic [ref=e605]: agent B
+                - generic [ref=e610]: msg
+                - generic [ref=e611]: each agent has its own isolated context
+                - generic [ref=e613]: Threads
+                - generic [ref=e615]: shared / composable context
+                - generic [ref=e617]: orch-
+                - generic [ref=e618]: estrator
+                - generic [ref=e620]: T1
+                - generic [ref=e622]: T2
+                - generic [ref=e627]: ctx in
+                - generic [ref=e628]: ctx in
+                - generic [ref=e629]: episode
+                - generic [ref=e630]: episode
+                - generic [ref=e631]: T1→T2
+                - generic [ref=e632]: context is explicitly shared — episodes compose across threads
+              - generic [ref=e633]: Subagents each run in their own isolated context and communicate only via message passing. Threads share context explicitly. The orchestrator passes context into each thread, episodes return back, and one thread's episode can become another thread's input.
+            - heading "Solving Episodic Memory with Threads" [level=3] [ref=e634]:
+              - link [ref=e635] [cursor=pointer]:
+                - /url: "#section-15"
+                - text: "#"
+              - text: Solving Episodic Memory with Threads
+            - paragraph [ref=e636]:
+              - text: The steps a thread takes while completing an action constitute an
+              - emphasis [ref=e637]: episode
+              - text: . This gives us a tractable form of true episodic memory in LLMs.
+            - paragraph [ref=e638]: "Episodic memory is the compressed representation of a completed episode: only the important results are retained, not the full tactical trace of every step taken to reach them. Subthreads do not do back-and-forth message passing with the main thread. Instead, they execute, and the episode is returned. This built-in completion boundary is what makes compaction natural in Slate's architecture."
+            - paragraph [ref=e639]: Episodes can also be used as direct inputs to other threads. This makes threads composable. A thread can be initialized with the episode of a prior thread inheriting the useful conclusions and work history without inheriting the full context. This composability is what makes a thread-based architecture maximally expressive as a primitive, and what distinguishes it from naive subagent designs that only pass back a single response string.
+            - heading "Thread Weaving" [level=3] [ref=e640]:
+              - link [ref=e641] [cursor=pointer]:
+                - /url: "#section-16"
+                - text: "#"
+              - text: Thread Weaving
+            - paragraph [ref=e642]:
+              - text: The result of thread-based execution is a system that decomposes tasks implicitly and adaptively — without ever requiring a static plan. The orchestrator is not forced to commit upfront, but
+              - emphasis [ref=e643]: is
+              - text: "forced to externalize work in bounded, compressible units. This is thread weaving: the orchestrator dispatches, threads execute, episodes compose."
+            - paragraph [ref=e644]:
+              - text: "The mechanism: the orchestrator uses threads"
+              - emphasis [ref=e645]: by reference
+              - text: ", giving it semantics for complex context routing — similar to what RLM achieves through its REPL, but without the rigidity since actions execute inside a thread one step at a time. Because thread scope is bounded, the system naturally synchronizes with the current plan. Because threads are LLM-driven rather than static scripts, they can react to unexpected environment state instead of crashing."
+            - paragraph [ref=e646]:
+              - text: The result is a system that decomposes tasks implicitly and adaptively. The orchestrator manages planning and decomposition as it goes. It's not forced to commit to a static plan upfront. But it
+              - emphasis [ref=e647]: is
+              - text: forced to externalize that decomposition in useful units of work that can be compressed and referenced later. Frequent synchronization means the orchestrator can also update its strategy when new information arrives mid-task.
+            - 'figure "Thread weaving: bounded worker episodes dispatched from and synchronized back into one orchestration thread. Threads T1/T2/T3 run independently; their episodes become inputs to subsequent work." [ref=e648]':
+              - paragraph [ref=e649]: "Slate: Thread Weaving & Episode Architecture"
+              - 'img "Slate execution graph: orchestrator dispatches threads whose episodes compose into downstream work" [ref=e650]':
+                - generic [ref=e651]: orchestrator
+                - generic [ref=e652]: dispatch
+                - generic [ref=e653]: threads
+                - generic [ref=e654]: episodes → inputs
+                - generic [ref=e656]: slate
+                - generic [ref=e657]: orch.
+                - generic [ref=e663]: T1
+                - generic [ref=e665]: T2
+                - generic [ref=e667]: T3
+                - generic [ref=e669]: T4
+                - generic [ref=e676]: T1+T2
+                - generic [ref=e677]: input
+                - generic [ref=e679]: T2+T3
+                - generic [ref=e680]: input
+                - generic [ref=e682]: T3+T4
+                - generic [ref=e683]: input
+                - generic [ref=e689]: T5
+                - generic [ref=e691]: T6
+                - generic [ref=e694]: dispatch
+                - generic [ref=e695]: episode as input
+                - generic [ref=e696]: episode returns to orch.
+              - generic [ref=e697]: "Thread weaving: bounded worker episodes dispatched from and synchronized back into one orchestration thread. Threads T1/T2/T3 run independently; their episodes become inputs to subsequent work."
+            - 'heading "Threads as Processes: A OS view into LLM systems" [level=3] [ref=e698]':
+              - link [ref=e699] [cursor=pointer]:
+                - /url: "#section-17"
+                - text: "#"
+              - text: "Threads as Processes: A OS view into LLM systems"
+            - paragraph [ref=e700]:
+              - text: Threads and episodes map directly onto an OS style framing.
+              - superscript [ref=e701]:
+                - link "[26]" [ref=e702] [cursor=pointer]:
+                  - /url: "#ref-26"
+            - figure "Karpathy's LLM OS framing — the LLM as OS kernel. Context window = RAM. Tool calls = processes. Files = storage. [26]" [ref=e703]:
+              - 'img "Karpathy''s LLM OS diagram: the LLM as an emerging OS kernel managing context (RAM), processes (tool calls/subagents), storage (files), and peripherals (browser, terminal, APIs)." [ref=e704]'
+              - generic [ref=e705]:
+                - text: Karpathy's LLM OS framing — the LLM as OS kernel. Context window = RAM. Tool calls = processes. Files = storage.
+                - superscript [ref=e706]:
+                  - link "[26]" [ref=e707] [cursor=pointer]:
+                    - /url: "#ref-26"
+            - paragraph [ref=e708]: "Specifically, Karpathy's LLM OS describes the LLM as an operating system kernel: managing context (RAM), spawning processes (tool calls, subagents), reading and writing to storage (files, memory), and coordinating I/O across peripherals (browsers, terminals, APIs). Just as an OS kernel doesn't execute application logic itself, the main thread LLM schedules tasks, manages resources, and maintains process state in order to route work through the system."
+            - paragraph [ref=e709]: "Slate's thread architecture maps onto this directly. The orchestration layer is the kernel. Threads are isolated processes. Episodes are the process return values: compressed summaries of what the process did, committed back into the kernel's working memory. The filesystem, terminal, and web are the peripherals. The model's context window is RAM — scarce, precious, and actively managed."
+            - paragraph [ref=e710]: "Slate's episode architecture is a direct answer in that framing: instead of letting RAM fill until the process crashes, each thread return is a natural opportunity to decide what gets retained, what gets compressed, and what gets discarded."
+            - heading "Long horizon task bottlenecks" [level=3] [ref=e711]:
+              - link [ref=e712] [cursor=pointer]:
+                - /url: "#section-18"
+                - text: "#"
+              - text: Long horizon task bottlenecks
+            - paragraph [ref=e713]: The real bottleneck in long-horizon agentic tasks is context management, not model intelligence. Models are already capable enough to solve many more tasks than they currently succeed at due to the knowledge overhang. The gap is a systems problem, not a capability problem.
+            - paragraph [ref=e714]: What's remarkable about Slate is that our routing works at all. The models seem to understand how to route context throughout the system in ways that are useful and appropriate, without being explicitly trained to do so. We leave a formal analysis and benchmarking of this routing behavior as future work.
+            - paragraph [ref=e715]:
+              - text: And we leave it as an exercise for the reader
+              - emphasis [ref=e716]: to experience.
+            - paragraph [ref=e717]: "Today we are releasing this agent into open beta. You can use it by visiting our home page or running `npm i -g @randomlabs/slate`"
+            - heading "Interesting Observations" [level=3] [ref=e718]:
+              - link [ref=e719] [cursor=pointer]:
+                - /url: "#section-19"
+                - text: "#"
+              - text: Interesting Observations
+            - paragraph [ref=e720]: "A few results that surprised us during development and testing:"
+            - list [ref=e721]:
+              - listitem [ref=e722]:
+                - strong [ref=e723]: Massively parallel execution in practical workflows.
+                - text: Real software tasks decompose naturally into parallel thread workstreams. The orchestrator can dispatch several threads simultaneously and synthesize their episodes before continuing. This is qualitatively different from sequential step-by-step agents and in practice it seems to be faster.
+              - listitem [ref=e724]:
+                - strong [ref=e725]: Cross-model composition.
+                - text: Using Sonnet and Codex together across the same task works well. The episode boundary acts as a clean handoff between models with no loss of context coherence.
+            - heading "References" [level=2] [ref=e726]:
+              - link [ref=e727] [cursor=pointer]:
+                - /url: "#section-20"
+                - text: "#"
+              - text: References
+            - list [ref=e728]:
+              - listitem [ref=e729]:
+                - link "RLM — Recursive Language Models (paper)" [ref=e730] [cursor=pointer]:
+                  - /url: https://arxiv.org/pdf/2512.24601v1
+              - listitem [ref=e731]:
+                - link "RLM — blog post overview" [ref=e732] [cursor=pointer]:
+                  - /url: https://alexzhang13.github.io/blog/2025/rlm/
+              - listitem [ref=e733]:
+                - 'link "Karpathy: LLM computer framing" [ref=e734] [cursor=pointer]':
+                  - /url: https://x.com/karpathy/status/1935518272667217925?lang=en
+              - listitem [ref=e735]:
+                - 'link "TerminalBench 2.0: Simple Codex baseline" [ref=e736] [cursor=pointer]':
+                  - /url: https://www.tbench.ai/leaderboard/terminal-bench/2.0/simple_codex/unknown/gpt-5.3-codex%40openai
+              - listitem [ref=e737]:
+                - link "Terminus minimal harness" [ref=e738] [cursor=pointer]:
+                  - /url: https://www.tbench.ai/news/terminus
+              - listitem [ref=e739]:
+                - 'link "Dex Horthy: the \"Dumb Zone\"" [ref=e740] [cursor=pointer]':
+                  - /url: http://youtube.com/watch?v=rmvDxxNubIg
+              - listitem [ref=e741]:
+                - 'link "Altera: Project Sid / PIANO architecture" [ref=e742] [cursor=pointer]':
+                  - /url: https://arxiv.org/pdf/2411.00114
+              - listitem [ref=e743]:
+                - 'link "Devin / Cognition: don''t build multi-agents" [ref=e744] [cursor=pointer]':
+                  - /url: https://cognition.ai/blog/dont-build-multi-agents
+              - listitem [ref=e745]:
+                - 'link "Manus: context engineering for AI agents" [ref=e746] [cursor=pointer]':
+                  - /url: https://manus.im/blog/Context-Engineering-for-AI-Agents-Lessons-from-Building-Manus
+              - listitem [ref=e747]:
+                - 'link "Manus: context engineering notes & slides" [ref=e748] [cursor=pointer]':
+                  - /url: https://rlancemartin.github.io/2025/10/15/manus/
+              - listitem [ref=e749]:
+                - 'link "Silver et al.: AlphaZero (Science, 2018)" [ref=e750] [cursor=pointer]':
+                  - /url: https://www.science.org/doi/10.1126/science.aar6404
+              - listitem [ref=e751]:
+                - link "AlphaZero knowledge acquisition probing (PNAS)" [ref=e752] [cursor=pointer]:
+                  - /url: https://www.pnas.org/doi/10.1073/pnas.2206625119
+              - listitem [ref=e753]:
+                - 'link "Stockfish vs LCZero: competing paradigms" [ref=e754] [cursor=pointer]':
+                  - /url: https://www.mdpi.com/1099-4300/24/4/550
+              - listitem [ref=e755]:
+                - 'link "Silver et al.: AlphaGo (Nature, 2016)" [ref=e756] [cursor=pointer]':
+                  - /url: https://storage.googleapis.com/deepmind-media/alphago/AlphaGoNaturePaper.pdf
+              - listitem [ref=e757]:
+                - 'link "DeepMind: innovations of AlphaGo" [ref=e758] [cursor=pointer]':
+                  - /url: https://deepmind.google/blog/innovations-of-alphago/
+              - listitem [ref=e759]:
+                - link "Stockfish chess engine" [ref=e760] [cursor=pointer]:
+                  - /url: https://github.com/official-stockfish/Stockfish
+              - listitem [ref=e761]:
+                - 'link "Geoffrey Huntley: the Ralph loop" [ref=e762] [cursor=pointer]':
+                  - /url: https://ghuntley.com/ralph/
+              - listitem [ref=e763]:
+                - 'link "Amp: handoff mechanism" [ref=e764] [cursor=pointer]':
+                  - /url: https://ampcode.com/news/handoff
+              - listitem [ref=e765]:
+                - 'link "ADaPT: as-needed decomposition and planning" [ref=e766] [cursor=pointer]':
+                  - /url: https://arxiv.org/pdf/2311.05772
+              - listitem [ref=e767]:
+                - 'link "TerminalBench 2.0: gpt2-codegolf task" [ref=e768] [cursor=pointer]':
+                  - /url: https://www.tbench.ai/benchmarks/terminal-bench-2/gpt2-codegolf
+              - listitem [ref=e769]:
+                - 'link "Yao et al.: ReAct — synergizing reasoning and acting" [ref=e770] [cursor=pointer]':
+                  - /url: https://arxiv.org/pdf/2210.03629
+              - listitem [ref=e771]:
+                - 'link "Wei et al.: chain-of-thought prompting" [ref=e772] [cursor=pointer]':
+                  - /url: https://arxiv.org/pdf/2201.11903
+              - listitem [ref=e773]:
+                - 'link "Manus: architecture slides" [ref=e774] [cursor=pointer]':
+                  - /url: https://docs.google.com/presentation/d/1Z-TFQpSpqtRqWcY-rBpf7D3vmI0rnMhbhbfv01duUrk/edit?pli=1&slide=id.g38aedf7fc8c_0_143#slide=id.g38aedf7fc8c_0_143
+              - listitem [ref=e775]:
+                - 'link "Hong, Troynikov, Huber: Context Rot — How Increasing Input Tokens Impacts LLM Performance (Chroma, 2025)" [ref=e776] [cursor=pointer]':
+                  - /url: https://research.trychroma.com/context-rot
+              - listitem [ref=e777]:
+                - link "Working memory in humans" [ref=e778] [cursor=pointer]:
+                  - /url: https://pmc.ncbi.nlm.nih.gov/articles/PMC8573634/
+          - link "← back to blog" [ref=e780] [cursor=pointer]:
+            - /url: /blog
+        - complementary [ref=e781]:
+          - navigation [ref=e783]:
+            - generic [ref=e784]: Contents
+            - list [ref=e785]:
+              - listitem [ref=e786]:
+                - link "# Introduction" [ref=e787] [cursor=pointer]:
+                  - /url: "#section-0"
+              - listitem [ref=e788]:
+                - link "# Background" [ref=e789] [cursor=pointer]:
+                  - /url: "#section-1"
+              - listitem [ref=e790]:
+                - link "# Understanding long horizon tasks" [ref=e791] [cursor=pointer]:
+                  - /url: "#section-2"
+              - listitem [ref=e792]:
+                - link "# Working memory" [ref=e793] [cursor=pointer]:
+                  - /url: "#section-3"
+              - listitem [ref=e794]:
+                - link "# Strategy and Tactics" [ref=e795] [cursor=pointer]:
+                  - /url: "#section-4"
+              - listitem [ref=e796]:
+                - link "# Prior Approaches" [ref=e797] [cursor=pointer]:
+                  - /url: "#section-5"
+              - listitem [ref=e798]:
+                - link "# Solving working memory and defeating the Dumb Zone" [ref=e799] [cursor=pointer]:
+                  - /url: "#section-6"
+              - listitem [ref=e800]:
+                - link "# Markdown Planning" [ref=e801] [cursor=pointer]:
+                  - /url: "#section-7"
+              - listitem [ref=e802]:
+                - link "# Direct Task Decomposition" [ref=e803] [cursor=pointer]:
+                  - /url: "#section-8"
+              - listitem [ref=e804]:
+                - link "# Expressivity and Inductive Bias" [ref=e805] [cursor=pointer]:
+                  - /url: "#section-9"
+              - listitem [ref=e806]:
+                - link "# RLM and Recursive Decomposition" [ref=e807] [cursor=pointer]:
+                  - /url: "#section-10"
+              - listitem [ref=e808]:
+                - link "# Devin, Manus, and Altera" [ref=e809] [cursor=pointer]:
+                  - /url: "#section-11"
+              - listitem [ref=e810]:
+                - link "# Codex and Claude Code" [ref=e811] [cursor=pointer]:
+                  - /url: "#section-12"
+              - listitem [ref=e812]:
+                - 'link "# Slate''s Approach: Thread Weaving and Episodes" [ref=e813] [cursor=pointer]':
+                  - /url: "#section-13"
+              - listitem [ref=e814]:
+                - link "# Threads" [ref=e815] [cursor=pointer]:
+                  - /url: "#section-14"
+              - listitem [ref=e816]:
+                - link "# Solving Episodic Memory with Threads" [ref=e817] [cursor=pointer]:
+                  - /url: "#section-15"
+              - listitem [ref=e818]:
+                - link "# Thread Weaving" [ref=e819] [cursor=pointer]:
+                  - /url: "#section-16"
+              - listitem [ref=e820]:
+                - 'link "# Threads as Processes: A OS view into LLM systems" [ref=e821] [cursor=pointer]':
+                  - /url: "#section-17"
+              - listitem [ref=e822]:
+                - link "# Long horizon task bottlenecks" [ref=e823] [cursor=pointer]:
+                  - /url: "#section-18"
+              - listitem [ref=e824]:
+                - link "# Interesting Observations" [ref=e825] [cursor=pointer]:
+                  - /url: "#section-19"
+              - listitem [ref=e826]:
+                - link "# References" [ref=e827] [cursor=pointer]:
+                  - /url: "#section-20"
+  - contentinfo [ref=e828]:
+    - generic [ref=e829]:
+      - link "terms" [ref=e830] [cursor=pointer]:
+        - /url: /terms
+      - link "privacy" [ref=e831] [cursor=pointer]:
+        - /url: /privacy
+      - paragraph [ref=e832]: © 2025 Random Labs

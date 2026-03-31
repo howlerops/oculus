@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/jbeck018/claude-go/pkg/config"
+	"github.com/howlerops/oculus/pkg/config"
 )
 
 // KeyBinding associates a key chord with an action
@@ -35,7 +35,7 @@ var defaultBindings = KeyBindingsConfig{
 
 // LoadKeyBindings reads keybindings from disk, falling back to defaults
 func LoadKeyBindings() KeyBindingsConfig {
-	path := filepath.Join(config.GetClaudeConfigDir(), "keybindings.json")
+	path := filepath.Join(config.GetOculusDir(), "keybindings.json")
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return defaultBindings
@@ -49,7 +49,7 @@ func LoadKeyBindings() KeyBindingsConfig {
 
 // SaveKeyBindings persists the given keybindings to disk
 func SaveKeyBindings(cfg KeyBindingsConfig) error {
-	path := filepath.Join(config.GetClaudeConfigDir(), "keybindings.json")
+	path := filepath.Join(config.GetOculusDir(), "keybindings.json")
 	data, err := json.MarshalIndent(cfg, "", "  ")
 	if err != nil {
 		return err

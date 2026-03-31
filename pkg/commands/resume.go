@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/jbeck018/claude-go/pkg/services/sessions"
+	"github.com/howlerops/oculus/pkg/services/sessions"
 )
 
 // RegisterSessionCommands adds resume and session commands to the registry.

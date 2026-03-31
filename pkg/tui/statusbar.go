@@ -34,7 +34,7 @@ func (s StatusBar) View() string {
 	// Model
 	if s.Model != "" {
 		modelStyle := lipgloss.NewStyle().
-			Foreground(lipgloss.Color("5")).
+			Foreground(lipgloss.Color("#0ea5e9")).
 			Bold(true)
 		// Short name
 		short := s.Model
@@ -51,7 +51,7 @@ func (s StatusBar) View() string {
 
 	// Git branch
 	if s.GitBranch != "" {
-		branchStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("6"))
+		branchStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#22d3ee"))
 		parts = append(parts, branchStyle.Render("⎇ "+s.GitBranch))
 	}
 

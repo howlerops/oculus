@@ -1,4 +1,4 @@
-module github.com/jbeck018/claude-go
+module github.com/howlerops/oculus
 
 go 1.25.4
 

@@ -7,8 +7,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/jbeck018/claude-go/pkg/tool"
-	"github.com/jbeck018/claude-go/pkg/types"
+	"github.com/howlerops/oculus/pkg/tool"
+	"github.com/howlerops/oculus/pkg/types"
 )
 
 // cronJob holds an in-memory cron job record.

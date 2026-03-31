@@ -46,7 +46,7 @@ func LoadMergedSettings() (*MergedSettings, error) {
 
 // GetLocalSettingsPath returns the path to the local settings override file
 func GetLocalSettingsPath() string {
-	return ".claude/settings.local.json"
+	return ".oculus/settings.local.json"
 }
 
 // trackUserSources marks all non-zero fields in s as coming from SourceUser

@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jbeck018/claude-go/pkg/types"
+	"github.com/howlerops/oculus/pkg/types"
 )
 
 func newTool() *BashTool {

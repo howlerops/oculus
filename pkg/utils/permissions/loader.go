@@ -1,8 +1,8 @@
 package permissions
 
 import (
-	"github.com/jbeck018/claude-go/pkg/config"
-	"github.com/jbeck018/claude-go/pkg/types"
+	"github.com/howlerops/oculus/pkg/config"
+	"github.com/howlerops/oculus/pkg/types"
 )
 
 // LoadPermissionRules loads rules from all settings sources and merges them

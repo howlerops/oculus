@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	mcpclient "github.com/jbeck018/claude-go/pkg/services/mcp"
-	"github.com/jbeck018/claude-go/pkg/tool"
-	"github.com/jbeck018/claude-go/pkg/types"
+	mcpclient "github.com/howlerops/oculus/pkg/services/mcp"
+	"github.com/howlerops/oculus/pkg/tool"
+	"github.com/howlerops/oculus/pkg/types"
 )
 
 // ListMcpResourcesTool lists resources available from an MCP server.

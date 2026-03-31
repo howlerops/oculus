@@ -2,27 +2,79 @@ package config
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 )
 
-// GetClaudeConfigDir returns the Claude config directory, respecting CLAUDE_CONFIG_DIR
-func GetClaudeConfigDir() string {
+// GetOculusDir returns the Claude config directory, respecting CLAUDE_CONFIG_DIR
+func GetOculusDir() string {
+	if dir := os.Getenv("OCULUS_CONFIG_DIR"); dir != "" {
+		return dir
+	}
+	// Legacy fallback
 	if dir := os.Getenv("CLAUDE_CONFIG_DIR"); dir != "" {
 		return dir
 	}
 	home, _ := os.UserHomeDir()
-	return filepath.Join(home, ".claude")
+	oculusDir := filepath.Join(home, ".oculus")
+	// Auto-migrate: if ~/.oculus/ doesn't exist but ~/.claude/ does, copy
+	if _, err := os.Stat(oculusDir); os.IsNotExist(err) {
+		claudeDir := filepath.Join(home, ".claude")
+		if _, err := os.Stat(claudeDir); err == nil {
+			MigrateConfigDir(claudeDir, oculusDir)
+		}
+	}
+	return oculusDir
+}
+
+// MigrateConfigDir copies contents from old config dir to new one
+func MigrateConfigDir(src, dst string) {
+	fmt.Fprintf(os.Stderr, "Migrating config from %s to %s...\n", src, dst)
+	os.MkdirAll(dst, 0o755)
+	entries, err := os.ReadDir(src)
+	if err != nil {
+		return
+	}
+	for _, entry := range entries {
+		srcPath := filepath.Join(src, entry.Name())
+		dstPath := filepath.Join(dst, entry.Name())
+		if entry.IsDir() {
+			// Recursive copy
+			cpDir(srcPath, dstPath)
+		} else {
+			data, err := os.ReadFile(srcPath)
+			if err == nil {
+				os.WriteFile(dstPath, data, 0o644)
+			}
+		}
+	}
+	fmt.Fprintf(os.Stderr, "Migration complete. Your config is now at %s\n", dst)
+}
+
+func cpDir(src, dst string) {
+	os.MkdirAll(dst, 0o755)
+	entries, _ := os.ReadDir(src)
+	for _, e := range entries {
+		s := filepath.Join(src, e.Name())
+		d := filepath.Join(dst, e.Name())
+		if e.IsDir() {
+			cpDir(s, d)
+		} else {
+			data, _ := os.ReadFile(s)
+			os.WriteFile(d, data, 0o644)
+		}
+	}
 }
 
 // GetSettingsPath returns the path to settings.json
 func GetSettingsPath() string {
-	return filepath.Join(GetClaudeConfigDir(), "settings.json")
+	return filepath.Join(GetOculusDir(), "settings.json")
 }
 
 // GetProjectSettingsPath returns the path to project-level settings
 func GetProjectSettingsPath() string {
-	return filepath.Join(".claude", "settings.json")
+	return filepath.Join(".oculus", "settings.json")
 }
 
 // LoadSettings reads and parses settings.json

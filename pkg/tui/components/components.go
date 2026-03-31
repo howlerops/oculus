@@ -12,24 +12,24 @@ import (
 var (
 	PermissionBorder = lipgloss.NewStyle().
 				Border(lipgloss.RoundedBorder()).
-				BorderForeground(lipgloss.Color("3")).
+				BorderForeground(lipgloss.Color("#22d3ee")). // cyan
 				Padding(1, 2)
 
 	ErrorStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("9")).
+			Foreground(lipgloss.Color("#ef4444")).
 			Bold(true)
 
 	SuccessStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("10"))
+			Foreground(lipgloss.Color("#22c55e"))
 
 	WarningStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("11"))
+			Foreground(lipgloss.Color("#eab308"))
 
 	MutedStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("8"))
+			Foreground(lipgloss.Color("#64748b"))
 
 	ToolNameStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("12")).
+			Foreground(lipgloss.Color("#0ea5e9")). // sky blue
 			Bold(true)
 )
 

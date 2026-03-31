@@ -3,11 +3,11 @@ package entrypoints
 import (
 	"context"
 
-	"github.com/jbeck018/claude-go/pkg/api"
-	"github.com/jbeck018/claude-go/pkg/query"
-	"github.com/jbeck018/claude-go/pkg/state"
-	"github.com/jbeck018/claude-go/pkg/tool"
-	"github.com/jbeck018/claude-go/pkg/types"
+	"github.com/howlerops/oculus/pkg/api"
+	"github.com/howlerops/oculus/pkg/query"
+	"github.com/howlerops/oculus/pkg/state"
+	"github.com/howlerops/oculus/pkg/tool"
+	"github.com/howlerops/oculus/pkg/types"
 )
 
 // SDKRunner provides a programmatic interface (no TUI)

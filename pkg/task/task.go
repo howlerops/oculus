@@ -85,7 +85,7 @@ func GenerateTaskId(taskType TaskType) string {
 
 // GetTaskOutputPath returns the file path for task output
 func GetTaskOutputPath(taskID string) string {
-	return filepath.Join(".claude", "tasks", taskID+".output")
+	return filepath.Join(".oculus", "tasks", taskID+".output")
 }
 
 // NewTaskState creates a new task in pending status

@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jbeck018/claude-go/pkg/types"
+	"github.com/howlerops/oculus/pkg/types"
 )
 
 // HookConfig defines a single hook from settings.json

@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/jbeck018/claude-go/pkg/config"
+	"github.com/howlerops/oculus/pkg/config"
 )
 
 // AgentDefinition describes a custom or built-in agent
@@ -41,11 +41,11 @@ func LoadAgentDefinitions() []AgentDefinition {
 
 	// Search paths for custom agents
 	searchDirs := []string{
-		filepath.Join(".claude", "agents"),
+		filepath.Join(".oculus", "agents"),
 	}
 	home, _ := os.UserHomeDir()
 	if home != "" {
-		searchDirs = append(searchDirs, filepath.Join(config.GetClaudeConfigDir(), "agents"))
+		searchDirs = append(searchDirs, filepath.Join(config.GetOculusDir(), "agents"))
 	}
 
 	for _, dir := range searchDirs {

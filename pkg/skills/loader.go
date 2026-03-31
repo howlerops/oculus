@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/jbeck018/claude-go/pkg/config"
+	"github.com/howlerops/oculus/pkg/config"
 )
 
 // Skill represents a discovered skill definition
@@ -22,8 +22,8 @@ func LoadSkills() []Skill {
 
 	// Project-level skills
 	projectPaths := []string{
-		filepath.Join(".claude", "skills"),
-		filepath.Join(".claude", "commands"), // legacy
+		filepath.Join(".oculus", "skills"),
+		filepath.Join(".oculus", "commands"), // legacy
 	}
 	for _, dir := range projectPaths {
 		skills = append(skills, loadFromDir(dir, false)...)
@@ -31,11 +31,11 @@ func LoadSkills() []Skill {
 
 	// User-level skills
 	home, _ := os.UserHomeDir()
-	configDir := config.GetClaudeConfigDir()
+	configDir := config.GetOculusDir()
 	userPaths := []string{
 		filepath.Join(configDir, "skills"),
 		filepath.Join(configDir, "commands"), // legacy
-		filepath.Join(home, ".claude", "skills"),
+		filepath.Join(home, ".oculus", "skills"),
 	}
 	for _, dir := range userPaths {
 		skills = append(skills, loadFromDir(dir, false)...)

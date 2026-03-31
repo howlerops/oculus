@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/jbeck018/claude-go/pkg/tool"
-	"github.com/jbeck018/claude-go/pkg/types"
+	"github.com/howlerops/oculus/pkg/tool"
+	"github.com/howlerops/oculus/pkg/types"
 )
 
 // McpAuthTool handles authentication with MCP servers (OAuth / token flows).

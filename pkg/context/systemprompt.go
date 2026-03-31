@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jbeck018/claude-go/pkg/api"
-	"github.com/jbeck018/claude-go/pkg/tool"
+	"github.com/howlerops/oculus/pkg/api"
+	"github.com/howlerops/oculus/pkg/tool"
 )
 
 // SystemPromptConfig controls what's included in the system prompt

@@ -8,7 +8,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/jbeck018/claude-go/pkg/config"
+	"github.com/howlerops/oculus/pkg/config"
 )
 
 // Migration defines a single versioned migration step
@@ -25,7 +25,7 @@ type MigrationState struct {
 }
 
 func getStatePath() string {
-	return filepath.Join(config.GetClaudeConfigDir(), "migration-state.json")
+	return filepath.Join(config.GetOculusDir(), "migration-state.json")
 }
 
 // GetCurrentVersion returns the last applied migration version
@@ -79,9 +79,9 @@ func BuiltInMigrations() []Migration {
 			Description: "Initialize config directory structure",
 			Migrate: func() error {
 				dirs := []string{
-					config.GetClaudeConfigDir(),
-					filepath.Join(config.GetClaudeConfigDir(), "conversations"),
-					filepath.Join(config.GetClaudeConfigDir(), "credentials"),
+					config.GetOculusDir(),
+					filepath.Join(config.GetOculusDir(), "conversations"),
+					filepath.Join(config.GetOculusDir(), "credentials"),
 				}
 				for _, dir := range dirs {
 					if err := os.MkdirAll(dir, 0o755); err != nil {

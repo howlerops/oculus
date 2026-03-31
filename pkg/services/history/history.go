@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/jbeck018/claude-go/pkg/config"
+	"github.com/howlerops/oculus/pkg/config"
 )
 
 // Entry represents a single conversation history entry
@@ -23,7 +23,7 @@ type Entry struct {
 
 // GetHistoryDir returns the history directory path
 func GetHistoryDir() string {
-	return filepath.Join(config.GetClaudeConfigDir(), "history")
+	return filepath.Join(config.GetOculusDir(), "history")
 }
 
 // AddEntry adds a conversation to history

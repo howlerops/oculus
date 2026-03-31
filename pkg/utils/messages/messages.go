@@ -5,8 +5,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jbeck018/claude-go/pkg/api"
-	"github.com/jbeck018/claude-go/pkg/types"
+	"github.com/howlerops/oculus/pkg/api"
+	"github.com/howlerops/oculus/pkg/types"
 )
 
 // CreateUserMessage creates a user message with text content

@@ -3,7 +3,7 @@ package commands
 import (
 	"context"
 
-	"github.com/jbeck018/claude-go/pkg/auth"
+	"github.com/howlerops/oculus/pkg/auth"
 )
 
 // RegisterAuthCommands adds login and logout commands to the registry.

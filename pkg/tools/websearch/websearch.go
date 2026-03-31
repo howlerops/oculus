@@ -6,10 +6,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jbeck018/claude-go/pkg/api"
-	"github.com/jbeck018/claude-go/pkg/config"
-	"github.com/jbeck018/claude-go/pkg/tool"
-	"github.com/jbeck018/claude-go/pkg/types"
+	"github.com/howlerops/oculus/pkg/api"
+	"github.com/howlerops/oculus/pkg/config"
+	"github.com/howlerops/oculus/pkg/tool"
+	"github.com/howlerops/oculus/pkg/types"
 )
 
 type WebSearchTool struct {

@@ -7,18 +7,20 @@ import (
 	"strings"
 )
 
-// ClaudeMdSearchPaths returns the paths to search for CLAUDE.md files
+// OculusMdSearchPaths returns paths to search for OCULUS.md (then CLAUDE.md fallback)
 // in priority order (project-local first, then global)
-func ClaudeMdSearchPaths() []string {
+func OculusMdSearchPaths() []string {
 	var paths []string
 
 	cwd, _ := os.Getwd()
 
-	// Project-level CLAUDE.md
+	// Project-level: OCULUS.md first, CLAUDE.md fallback
+	paths = append(paths, filepath.Join(cwd, "OCULUS.md"))
 	paths = append(paths, filepath.Join(cwd, "CLAUDE.md"))
+	paths = append(paths, filepath.Join(cwd, ".oculus", "OCULUS.md"))
 	paths = append(paths, filepath.Join(cwd, ".claude", "CLAUDE.md"))
 
-	// Walk up to find parent CLAUDE.md files
+	// Walk up to find parent files
 	dir := cwd
 	for {
 		parent := filepath.Dir(dir)
@@ -26,29 +28,40 @@ func ClaudeMdSearchPaths() []string {
 			break
 		}
 		dir = parent
+		paths = append(paths, filepath.Join(dir, "OCULUS.md"))
 		paths = append(paths, filepath.Join(dir, "CLAUDE.md"))
+		paths = append(paths, filepath.Join(dir, ".oculus", "OCULUS.md"))
 		paths = append(paths, filepath.Join(dir, ".claude", "CLAUDE.md"))
 	}
 
-	// Global CLAUDE.md
+	// Global: check oculus config dir, then claude fallback
 	home, _ := os.UserHomeDir()
 	if home != "" {
-		configDir := os.Getenv("CLAUDE_CONFIG_DIR")
+		configDir := os.Getenv("OCULUS_CONFIG_DIR")
 		if configDir == "" {
-			configDir = filepath.Join(home, ".claude")
+			configDir = filepath.Join(home, ".oculus")
 		}
+		paths = append(paths, filepath.Join(configDir, "OCULUS.md"))
 		paths = append(paths, filepath.Join(configDir, "CLAUDE.md"))
+		// Also check legacy ~/.claude/ dir
+		legacyDir := filepath.Join(home, ".claude")
+		if legacyDir != configDir {
+			paths = append(paths, filepath.Join(legacyDir, "CLAUDE.md"))
+		}
 	}
 
 	return paths
 }
 
-// LoadClaudeMd discovers and concatenates all CLAUDE.md files
+// ClaudeMdSearchPaths is an alias for backward compatibility
+func ClaudeMdSearchPaths() []string { return OculusMdSearchPaths() }
+
+// LoadClaudeMd discovers and concatenates all OCULUS.md/CLAUDE.md files
 func LoadClaudeMd() string {
 	seen := make(map[string]bool)
 	var parts []string
 
-	for _, path := range ClaudeMdSearchPaths() {
+	for _, path := range OculusMdSearchPaths() {
 		absPath, err := filepath.Abs(path)
 		if err != nil {
 			continue

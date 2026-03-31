@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jbeck018/claude-go/pkg/config"
-	"github.com/jbeck018/claude-go/pkg/types"
+	"github.com/howlerops/oculus/pkg/config"
+	"github.com/howlerops/oculus/pkg/types"
 )
 
 type MemoryEntry struct {
@@ -20,7 +20,7 @@ type MemoryEntry struct {
 }
 
 func GetMemoryDir() string {
-	return filepath.Join(config.GetClaudeConfigDir(), "memory")
+	return filepath.Join(config.GetOculusDir(), "memory")
 }
 
 func SaveMemory(entry MemoryEntry) error {

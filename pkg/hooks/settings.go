@@ -1,8 +1,8 @@
 package hooks
 
 import (
-	"github.com/jbeck018/claude-go/pkg/config"
-	"github.com/jbeck018/claude-go/pkg/types"
+	"github.com/howlerops/oculus/pkg/config"
+	"github.com/howlerops/oculus/pkg/types"
 )
 
 // LoadHooksFromSettings reads hook configurations from settings.json

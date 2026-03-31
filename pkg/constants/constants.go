@@ -23,8 +23,8 @@ const (
 
 // File paths
 const (
-	ClaudeConfigDir = ".claude"
+	OculusConfigDir = ".oculus"
 	SettingsFile    = "settings.json"
 	ConfigFile      = "config.json"
-	ClaudeMdFile    = "CLAUDE.md"
+	OculusMdFile    = "OCULUS.md"
 )

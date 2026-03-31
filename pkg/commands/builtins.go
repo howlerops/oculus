@@ -152,11 +152,11 @@ func RegisterBuiltins(reg *Registry) {
 		Name:        "init",
 		Description: "Initialize CLAUDE.md for this project",
 		Run: func(_ context.Context, _ string) (string, bool, error) {
-			path := ".claude/CLAUDE.md"
+			path := ".oculus/OCULUS.md"
 			if _, err := os.Stat(path); err == nil {
 				return "CLAUDE.md already exists.", false, nil
 			}
-			os.MkdirAll(".claude", 0o755)
+			os.MkdirAll(".oculus", 0o755)
 			content := fmt.Sprintf("# Project Instructions\n\nCreated: %s\n\nAdd project-specific instructions here.\n", time.Now().Format("2006-01-02"))
 			os.WriteFile(path, []byte(content), 0o644)
 			return fmt.Sprintf("Created %s", path), false, nil
@@ -421,7 +421,7 @@ func RegisterBuiltins(reg *Registry) {
 				return "Usage: /feedback <your feedback>\nFeedback is recorded locally at ~/.claude/feedback.log", false, nil
 			}
 			home, _ := os.UserHomeDir()
-			logPath := filepath.Join(home, ".claude", "feedback.log")
+			logPath := filepath.Join(home, ".oculus", "feedback.log")
 			os.MkdirAll(filepath.Dir(logPath), 0o755)
 			entry := fmt.Sprintf("[%s] %s\n", time.Now().Format(time.RFC3339), args)
 			f, err := os.OpenFile(logPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
@@ -441,7 +441,7 @@ func RegisterBuiltins(reg *Registry) {
 		Description: "Rate the last response positively",
 		Run: func(_ context.Context, args string) (string, bool, error) {
 			home, _ := os.UserHomeDir()
-			logPath := filepath.Join(home, ".claude", "ratings.log")
+			logPath := filepath.Join(home, ".oculus", "ratings.log")
 			os.MkdirAll(filepath.Dir(logPath), 0o755)
 			note := args
 			if note == "" {
@@ -474,7 +474,7 @@ func RegisterBuiltins(reg *Registry) {
 		Description: "Re-run the onboarding flow",
 		Run: func(_ context.Context, _ string) (string, bool, error) {
 			home, _ := os.UserHomeDir()
-			flagPath := filepath.Join(home, ".claude", ".onboarding_complete")
+			flagPath := filepath.Join(home, ".oculus", ".onboarding_complete")
 			os.Remove(flagPath) // reset completion flag so onboarding re-runs on next start
 			var sb strings.Builder
 			sb.WriteString("Onboarding reset.\n\n")
@@ -692,7 +692,7 @@ alias ccc='claude --continue'
 		Name:        "agents",
 		Description: "Manage agent definitions in .claude/agents/",
 		Run: func(_ context.Context, args string) (string, bool, error) {
-			agentsDir := ".claude/agents"
+			agentsDir := ".oculus/agents"
 			switch strings.TrimSpace(args) {
 			case "", "list":
 				entries, err := os.ReadDir(agentsDir)
@@ -729,7 +729,7 @@ alias ccc='claude --continue'
 		Description: "Configure advisor agent settings",
 		Run: func(_ context.Context, args string) (string, bool, error) {
 			home, _ := os.UserHomeDir()
-			cfgPath := filepath.Join(home, ".claude", "advisors.json")
+			cfgPath := filepath.Join(home, ".oculus", "advisors.json")
 
 			if args == "" {
 				data, err := os.ReadFile(cfgPath)
@@ -805,7 +805,7 @@ alias ccc='claude --continue'
 		Description: "Backfill session history from local conversation logs",
 		Run: func(_ context.Context, _ string) (string, bool, error) {
 			home, _ := os.UserHomeDir()
-			sessionsDir := filepath.Join(home, ".claude", "sessions")
+			sessionsDir := filepath.Join(home, ".oculus", "sessions")
 			entries, err := os.ReadDir(sessionsDir)
 			if err != nil {
 				return fmt.Sprintf("No sessions directory found at %s", sessionsDir), false, nil
@@ -845,7 +845,7 @@ alias ccc='claude --continue'
 		Description: "Break the prompt cache to force a fresh context on next request",
 		Run: func(_ context.Context, _ string) (string, bool, error) {
 			home, _ := os.UserHomeDir()
-			cachePath := filepath.Join(home, ".claude", ".prompt_cache_key")
+			cachePath := filepath.Join(home, ".oculus", ".prompt_cache_key")
 			newKey := fmt.Sprintf("%d", time.Now().UnixNano())
 			os.MkdirAll(filepath.Dir(cachePath), 0o755)
 			os.WriteFile(cachePath, []byte(newKey), 0o644)
@@ -859,7 +859,7 @@ alias ccc='claude --continue'
 		Description: "Toggle voice input/output mode",
 		Run: func(_ context.Context, args string) (string, bool, error) {
 			home, _ := os.UserHomeDir()
-			flagPath := filepath.Join(home, ".claude", ".voice_mode")
+			flagPath := filepath.Join(home, ".oculus", ".voice_mode")
 			if _, err := os.Stat(flagPath); err == nil {
 				// Currently on — turn off
 				os.Remove(flagPath)
@@ -878,7 +878,7 @@ alias ccc='claude --continue'
 		Description: "Toggle brief/concise output mode",
 		Run: func(_ context.Context, args string) (string, bool, error) {
 			home, _ := os.UserHomeDir()
-			flagPath := filepath.Join(home, ".claude", ".brief_mode")
+			flagPath := filepath.Join(home, ".oculus", ".brief_mode")
 			if _, err := os.Stat(flagPath); err == nil {
 				os.Remove(flagPath)
 				return "Brief mode disabled. Responses will use normal verbosity.", false, nil
@@ -895,7 +895,7 @@ alias ccc='claude --continue'
 		Description: "Toggle proactive suggestions mode",
 		Run: func(_ context.Context, args string) (string, bool, error) {
 			home, _ := os.UserHomeDir()
-			flagPath := filepath.Join(home, ".claude", ".proactive_mode")
+			flagPath := filepath.Join(home, ".oculus", ".proactive_mode")
 			if _, err := os.Stat(flagPath); err == nil {
 				os.Remove(flagPath)
 				return "Proactive mode disabled. Claude will only respond when asked.", false, nil

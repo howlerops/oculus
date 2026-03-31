@@ -17,5 +17,12 @@ type Theme struct {
 }
 
 func DefaultTheme() Theme {
-	return Theme{Name: ThemeDark, Primary: "#7C3AED", Error: "#EF4444", Warning: "#F59E0B", Success: "#10B981", Muted: "#6B7280"}
+	return Theme{
+		Name:    ThemeDark,
+		Primary: "#0ea5e9", // sky blue
+		Error:   "#ef4444",
+		Warning: "#eab308",
+		Success: "#22c55e",
+		Muted:   "#64748b", // slate
+	}
 }

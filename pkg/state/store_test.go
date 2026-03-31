@@ -4,8 +4,8 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/jbeck018/claude-go/pkg/task"
-	"github.com/jbeck018/claude-go/pkg/types"
+	"github.com/howlerops/oculus/pkg/task"
+	"github.com/howlerops/oculus/pkg/types"
 )
 
 func TestNewStore(t *testing.T) {

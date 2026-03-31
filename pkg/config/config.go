@@ -25,7 +25,7 @@ var (
 )
 
 func getGlobalConfigPath() string {
-	return filepath.Join(GetClaudeConfigDir(), "config.json")
+	return filepath.Join(GetOculusDir(), "config.json")
 }
 
 // GetGlobalConfig loads or returns cached global config

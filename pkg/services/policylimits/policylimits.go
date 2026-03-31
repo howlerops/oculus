@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/jbeck018/claude-go/pkg/config"
+	"github.com/howlerops/oculus/pkg/config"
 )
 
 type PolicyLimits struct {
@@ -23,7 +23,7 @@ type PolicyLimits struct {
 
 func LoadPolicyLimits() (*PolicyLimits, error) {
 	paths := []string{
-		filepath.Join(config.GetClaudeConfigDir(), "policy.json"),
+		filepath.Join(config.GetOculusDir(), "policy.json"),
 		"/etc/claude-code/policy.json",
 	}
 	for _, path := range paths {

@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/jbeck018/claude-go/pkg/tool"
-	"github.com/jbeck018/claude-go/pkg/types"
+	"github.com/howlerops/oculus/pkg/tool"
+	"github.com/howlerops/oculus/pkg/types"
 )
 
 type SkillTool struct {
@@ -41,14 +41,14 @@ func (t *SkillTool) Call(_ context.Context, input map[string]interface{}, _ func
 
 	// Search for skill file in known paths
 	searchPaths := []string{
-		filepath.Join(".claude", "skills", skillName, "SKILL.md"),
-		filepath.Join(".claude", "skills", skillName+".md"),
+		filepath.Join(".oculus", "skills", skillName, "SKILL.md"),
+		filepath.Join(".oculus", "skills", skillName+".md"),
 	}
 	home, _ := os.UserHomeDir()
 	if home != "" {
 		searchPaths = append(searchPaths,
-			filepath.Join(home, ".claude", "skills", skillName, "SKILL.md"),
-			filepath.Join(home, ".claude", "skills", skillName+".md"),
+			filepath.Join(home, ".oculus", "skills", skillName, "SKILL.md"),
+			filepath.Join(home, ".oculus", "skills", skillName+".md"),
 		)
 	}
 

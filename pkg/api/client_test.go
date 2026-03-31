@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/jbeck018/claude-go/pkg/types"
+	"github.com/howlerops/oculus/pkg/types"
 )
 
 func TestCreateMessageStream(t *testing.T) {

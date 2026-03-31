@@ -5,14 +5,14 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/jbeck018/claude-go/pkg/config"
+	"github.com/howlerops/oculus/pkg/config"
 )
 
 const MemoryDirName = "memory"
 
 // GetMemoryDir returns the auto-memory directory path
 func GetMemoryDir() string {
-	return filepath.Join(config.GetClaudeConfigDir(), "projects", getCurrentProjectHash(), MemoryDirName)
+	return filepath.Join(config.GetOculusDir(), "projects", getCurrentProjectHash(), MemoryDirName)
 }
 
 // IsAutoMemoryEnabled checks if auto-memory feature is on
