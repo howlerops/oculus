@@ -25,6 +25,12 @@ func (m Model) View() string {
 		return m.permission.View()
 	}
 
+	// Show splash if no messages yet
+	if len(m.messages) == 0 && m.state == StateChat {
+		splash := RenderSplash(m.width)
+		return splash + "\n" + m.input.View() + "\n" + m.statusBar.View()
+	}
+
 	// Header
 	header := headerViewStyle.Render("◉ Oculus")
 	if m.state == StateLoading {

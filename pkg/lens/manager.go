@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/howlerops/oculus/pkg/api"
+	"github.com/howlerops/oculus/pkg/bridge"
 	"github.com/howlerops/oculus/pkg/query"
 	"github.com/howlerops/oculus/pkg/state"
 	"github.com/howlerops/oculus/pkg/tool"
@@ -39,7 +40,36 @@ func NewManager(cfg OculusConfig, client *api.Client, tools tool.Tools, store *s
 		m.workers[LensCraft] = NewLensWorker(cfg.Craft, client, tools, store)
 	}
 
+	// Wire bridges for workers that specify a non-anthropic provider
+	for lensType, worker := range m.workers {
+		lensCfg := getLensConfig(cfg, lensType)
+		if lensCfg.Provider != "" && lensCfg.Provider != "anthropic" {
+			bridgeCfg := bridge.BridgeConfig{
+				Provider: lensCfg.Provider,
+				Model:    lensCfg.Model,
+			}
+			b, err := bridge.CreateBridge(bridgeCfg)
+			if err == nil {
+				worker.SetBridge(b)
+			}
+		}
+	}
+
 	return m
+}
+
+// getLensConfig returns the LensConfig for a given LensType
+func getLensConfig(cfg OculusConfig, lensType LensType) LensConfig {
+	switch lensType {
+	case LensFocus:
+		return cfg.Focus
+	case LensScan:
+		return cfg.Scan
+	case LensCraft:
+		return cfg.Craft
+	default:
+		return cfg.Focus
+	}
 }
 
 // GetWorker returns the worker for a lens type, falling back to Focus

@@ -10,6 +10,8 @@ import (
 	"runtime"
 	"strings"
 	"time"
+
+	config "github.com/howlerops/oculus/pkg/config"
 )
 
 // RegisterBuiltins adds all built-in commands to the registry
@@ -35,7 +37,7 @@ func RegisterBuiltins(reg *Registry) {
 		Aliases:     []string{"c"},
 		Description: "Summarize and compact the conversation to free context",
 		Run: func(_ context.Context, _ string) (string, bool, error) {
-			return "Conversation compacted.", true, nil
+			return "Compacting conversation... The assistant will summarize older messages to free context space.", true, nil
 		},
 	})
 
@@ -177,10 +179,22 @@ func RegisterBuiltins(reg *Registry) {
 		Description: "Switch the AI model",
 		Run: func(_ context.Context, args string) (string, bool, error) {
 			if args == "" {
-				return "Usage: /model <name>\nAvailable: opus, sonnet, haiku\nCurrent: " + getCurrentModel(), false, nil
+				models := config.ListModels()
+				return fmt.Sprintf("Current model: %s\nAvailable: %s\nUsage: /model <name>", getCurrentModel(), strings.Join(models, ", ")), false, nil
 			}
-			resolved := resolveModelAlias(args)
-			return fmt.Sprintf("Model switched to: %s", resolved), false, nil
+			info, found := config.ResolveModel(args)
+			if !found {
+				return fmt.Sprintf("Unknown model: %s. Available: opus, sonnet, haiku", args), false, nil
+			}
+			settings, _ := config.LoadSettings()
+			if settings == nil {
+				settings = &config.SettingsJson{}
+			}
+			settings.Model = info.ID
+			data, _ := json.Marshal(settings)
+			os.WriteFile(config.GetSettingsPath(), data, 0o644)
+			config.InvalidateSettingsCache()
+			return fmt.Sprintf("Model switched to: %s (%s)\nInput: $%.2f/M tokens | Output: $%.2f/M tokens", info.DisplayName, info.ID, info.CostInput, info.CostOutput), false, nil
 		},
 	})
 
@@ -239,9 +253,28 @@ func RegisterBuiltins(reg *Registry) {
 		Aliases:     []string{"perm"},
 		Description: "View or change permission settings",
 		Run: func(_ context.Context, args string) (string, bool, error) {
-			if args == "" {
-				return "Current permission mode: default\nModes: default, acceptEdits, bypassPermissions, plan", false, nil
+			settings, _ := config.LoadSettings()
+			currentMode := "default"
+			if settings != nil && settings.DefaultMode != "" {
+				currentMode = settings.DefaultMode
 			}
+
+			if args == "" {
+				return fmt.Sprintf("Current permission mode: %s\n\nAvailable modes:\n  default             - Ask for most operations\n  acceptEdits         - Auto-approve file edits\n  bypassPermissions   - Allow everything (dangerous)\n  plan                - Read-only, planning only\n\nUsage: /permissions <mode>", currentMode), false, nil
+			}
+
+			validModes := map[string]bool{"default": true, "acceptEdits": true, "bypassPermissions": true, "plan": true}
+			if !validModes[args] {
+				return fmt.Sprintf("Invalid mode: %s. Use: default, acceptEdits, bypassPermissions, plan", args), false, nil
+			}
+
+			if settings == nil {
+				settings = &config.SettingsJson{}
+			}
+			settings.DefaultMode = args
+			data, _ := json.Marshal(settings)
+			os.WriteFile(config.GetSettingsPath(), data, 0o644)
+			config.InvalidateSettingsCache()
 			return fmt.Sprintf("Permission mode set to: %s", args), false, nil
 		},
 	})
@@ -251,7 +284,7 @@ func RegisterBuiltins(reg *Registry) {
 		Aliases:     []string{"ctx"},
 		Description: "Show context window usage",
 		Run: func(_ context.Context, _ string) (string, bool, error) {
-			return "Context usage: (token counting active during conversations)", false, nil
+			return "Context window: 200,000 tokens\nUsage: tracked per-session in status bar\nUse /compact to free space when running low.", false, nil
 		},
 	})
 
@@ -310,7 +343,7 @@ func RegisterBuiltins(reg *Registry) {
 		Name:        "tasks",
 		Description: "Show background tasks",
 		Run: func(_ context.Context, _ string) (string, bool, error) {
-			return "Background tasks: (none active)", false, nil
+			return "Tasks panel: visible in TUI mode.\nUse TaskCreate/TaskUpdate tools to manage tasks.", false, nil
 		},
 	})
 

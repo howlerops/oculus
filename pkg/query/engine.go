@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"github.com/howlerops/oculus/pkg/api"
+	"github.com/howlerops/oculus/pkg/services/episodes"
 	"github.com/howlerops/oculus/pkg/state"
 	"github.com/howlerops/oculus/pkg/tool"
 	"github.com/howlerops/oculus/pkg/types"
@@ -25,11 +26,14 @@ type StreamHandler interface {
 
 // Engine runs the main conversation loop
 type Engine struct {
-	Client    *api.Client
-	Tools     tool.Tools
-	Store     *state.Store
-	Model     string
-	MaxTokens int
+	Client      *api.Client
+	Tools       tool.Tools
+	Store       *state.Store
+	Model       string
+	MaxTokens   int
+	Episodes    *episodes.Store
+	ContextLoop *episodes.ContextLoop
+	lcmConfig   episodes.LCMConfig
 }
 
 // NewEngine creates a new query engine
@@ -43,8 +47,36 @@ func NewEngine(client *api.Client, tools tool.Tools, store *state.Store, model s
 	}
 }
 
+// SetEpisodes wires in the episode store and creates the context loop
+func (e *Engine) SetEpisodes(store *episodes.Store, config episodes.LCMConfig) {
+	e.Episodes = store
+	e.lcmConfig = config
+	e.ContextLoop = episodes.NewContextLoop(config, store)
+}
+
 // RunQuery executes a full conversation turn including tool use loops
 func (e *Engine) RunQuery(ctx context.Context, messages []types.Message, systemPrompt interface{}, handler StreamHandler) ([]types.Message, error) {
+	// Create a new episode for this conversation turn
+	var ep *episodes.Episode
+	if e.Episodes != nil {
+		ep = e.Episodes.CreateEpisode()
+		// Record the last user message into the episode
+		for i := len(messages) - 1; i >= 0; i-- {
+			if messages[i].Kind == "user" && messages[i].User != nil {
+				var parts []string
+				for _, b := range messages[i].User.Content {
+					if b.Text != "" {
+						parts = append(parts, b.Text)
+					}
+				}
+				if len(parts) > 0 {
+					e.Episodes.AddMessage(ep.ID, "user", strings.Join(parts, " "), "", len(strings.Join(parts, " "))/4)
+				}
+				break
+			}
+		}
+	}
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -140,6 +172,31 @@ func (e *Engine) RunQuery(ctx context.Context, messages []types.Message, systemP
 			})
 		}
 
+		// Track assistant response in active episode
+		if ep != nil && e.Episodes != nil {
+			var textParts []string
+			var toolUse string
+			for _, b := range assistantContent {
+				if b.Text != "" {
+					textParts = append(textParts, b.Text)
+				}
+				if b.Type == types.ContentBlockToolUse {
+					toolUse = b.Name
+				}
+			}
+			content := strings.Join(textParts, " ")
+			e.Episodes.AddMessage(ep.ID, "assistant", content, toolUse, len(content)/4)
+		}
+
+		// Check context thresholds and compact if needed
+		if e.Episodes != nil && e.ContextLoop != nil {
+			totalTokens := estimateConversationTokens(messages)
+			level := e.ContextLoop.CheckThreshold(totalTokens)
+			if level == "hard" {
+				e.ContextLoop.CompactUntilBelow(e.lcmConfig.SoftThreshold)
+			}
+		}
+
 		handler.OnComplete(stopReason, usage)
 
 		if stopReason != types.StopReasonToolUse {
@@ -159,7 +216,39 @@ func (e *Engine) RunQuery(ctx context.Context, messages []types.Message, systemP
 			},
 		}
 		messages = append(messages, resultMsg)
+
+		// Track tool results in active episode
+		if ep != nil && e.Episodes != nil {
+			for _, r := range toolResults {
+				if r.Type == types.ContentBlockToolResult {
+					content, _ := r.Content.(string)
+					e.Episodes.AddMessage(ep.ID, "tool", content, r.ToolUseID, len(content)/4)
+				}
+			}
+		}
 	}
+}
+
+// estimateConversationTokens provides a rough token count for a message slice
+func estimateConversationTokens(messages []types.Message) int {
+	total := 0
+	for _, msg := range messages {
+		switch msg.Kind {
+		case "user":
+			if msg.User != nil {
+				for _, b := range msg.User.Content {
+					total += len(b.Text) / 4
+				}
+			}
+		case "assistant":
+			if msg.Assistant != nil {
+				for _, b := range msg.Assistant.Content {
+					total += len(b.Text)/4 + len(b.Thinking)/4
+				}
+			}
+		}
+	}
+	return total
 }
 
 func (e *Engine) executeToolCalls(ctx context.Context, content []types.ContentBlock, handler StreamHandler) ([]types.ContentBlock, error) {

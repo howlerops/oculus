@@ -2,10 +2,12 @@ package mcp
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"os/exec"
 	"strings"
@@ -67,12 +69,33 @@ func (c *Client) Connect(ctx context.Context, name string, cfg ServerConfig) (*S
 	}
 
 	if cfg.Transport == "http" {
-		// HTTP transport - stub for now
+		if cfg.URL == "" {
+			return nil, fmt.Errorf("HTTP transport requires url in config")
+		}
+
 		conn := &ServerConnection{
 			Name:   name,
 			Config: cfg,
-			Status: StatusConnected,
+			Status: StatusConnecting,
 		}
+
+		// List tools via HTTP
+		toolsResp, err := httpRequest(ctx, cfg.URL, "tools/list", nil, cfg.Headers)
+		if err == nil {
+			var toolsList struct {
+				Tools []ServerTool `json:"tools"`
+			}
+			if err := json.Unmarshal(toolsResp, &toolsList); err == nil {
+				conn.Tools = toolsList.Tools
+			}
+		}
+
+		conn.Status = StatusConnected
+		c.connections[name] = &connection{
+			name:   name,
+			config: cfg,
+		}
+
 		return conn, nil
 	}
 
@@ -162,6 +185,22 @@ func (c *Client) CallTool(ctx context.Context, serverName, toolName string, args
 
 	if !ok {
 		return nil, fmt.Errorf("server %q not connected", serverName)
+	}
+
+	// Use HTTP transport if the connection was configured for it
+	if conn.config.Transport == "http" {
+		result, err := httpRequest(ctx, conn.config.URL, "tools/call", ToolCallParams{
+			Name:      toolName,
+			Arguments: args,
+		}, conn.config.Headers)
+		if err != nil {
+			return nil, err
+		}
+		var resp ToolCallResponse
+		if err := json.Unmarshal(result, &resp); err != nil {
+			return nil, fmt.Errorf("unmarshal response: %w", err)
+		}
+		return &resp, nil
 	}
 
 	result, err := conn.sendRequest("tools/call", ToolCallParams{
@@ -262,4 +301,48 @@ func (conn *connection) sendNotification(method string, params interface{}) {
 	data, _ := json.Marshal(req)
 	data = append(data, '\n')
 	conn.stdin.Write(data) //nolint:errcheck
+}
+
+// httpRequest sends a JSON-RPC request over HTTP and returns the result payload.
+func httpRequest(ctx context.Context, baseURL, method string, params interface{}, headers map[string]string) (json.RawMessage, error) {
+	reqBody := JSONRPCRequest{
+		JSONRPC: "2.0",
+		ID:      1,
+		Method:  method,
+		Params:  params,
+	}
+	data, err := json.Marshal(reqBody)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "POST", baseURL, bytes.NewReader(data))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	for k, v := range headers {
+		req.Header.Set(k, v)
+	}
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	var rpcResp JSONRPCResponse
+	if err := json.Unmarshal(body, &rpcResp); err != nil {
+		return nil, err
+	}
+	if rpcResp.Error != nil {
+		return nil, fmt.Errorf("RPC error %d: %s", rpcResp.Error.Code, rpcResp.Error.Message)
+	}
+
+	return rpcResp.Result, nil
 }

@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/howlerops/oculus/pkg/api"
+	"github.com/howlerops/oculus/pkg/bridge"
 	"github.com/howlerops/oculus/pkg/query"
 	"github.com/howlerops/oculus/pkg/state"
 	"github.com/howlerops/oculus/pkg/tool"
@@ -17,6 +18,7 @@ type LensWorker struct {
 	Engine *query.Engine
 	Store  *state.Store
 	Active bool
+	Bridge bridge.Bridge // optional - if set, used instead of raw Engine
 }
 
 // NewLensWorker creates a worker for a specific lens
@@ -28,6 +30,11 @@ func NewLensWorker(cfg LensConfig, client *api.Client, tools tool.Tools, store *
 		Store:  store,
 		Active: cfg.Enabled,
 	}
+}
+
+// SetBridge sets an optional bridge to use instead of the raw Engine
+func (w *LensWorker) SetBridge(b bridge.Bridge) {
+	w.Bridge = b
 }
 
 // RunQuery executes a query through this lens with its persona injected

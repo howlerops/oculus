@@ -1,11 +1,9 @@
 package main
 
 import (
-	"bufio"
 	gocontext "context"
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/howlerops/oculus/pkg/api"
 	"github.com/howlerops/oculus/pkg/auth"
@@ -93,9 +91,12 @@ func runMain(cmd *cobra.Command, args []string) error {
 
 	store := state.NewStore(state.NewAppState(model))
 
-	systemCtx := appcontext.GetSystemContext()
-	userCtx := appcontext.GetUserContext()
-	systemPrompt := buildSystemPrompt(systemCtx, userCtx)
+	systemPrompt := appcontext.BuildSystemPromptString(appcontext.SystemPromptConfig{
+		Model:            model,
+		Tools:            tools,
+		CWD:              cwd,
+		IsNonInteractive: !isInteractive,
+	})
 
 	engine := query.NewEngine(client, tools, store, model)
 
@@ -107,7 +108,6 @@ func runMain(cmd *cobra.Command, args []string) error {
 		lensCfg.Craft.Model = model
 	}
 	lensManager := lens.NewManager(lensCfg, client, tools, store)
-	_ = lensManager // Will be used for routing in future; engine still handles queries directly
 
 	// Print mode (non-interactive)
 	if flagPrint != "" {
@@ -123,8 +123,9 @@ func runMain(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	// Interactive REPL
-	return runREPL(cmd.Context(), engine, systemPrompt)
+	// Interactive TUI
+	fmt.Print(oculustui.RenderSplash(80))
+	return oculustui.Run(engine, lensManager, systemPrompt)
 }
 
 func runPrintMode(ctx gocontext.Context, engine *query.Engine, prompt string, systemPrompt interface{}) error {
@@ -133,40 +134,6 @@ func runPrintMode(ctx gocontext.Context, engine *query.Engine, prompt string, sy
 	_, err := engine.RunQuery(ctx, messages, systemPrompt, handler)
 	fmt.Println()
 	return err
-}
-
-func runREPL(ctx gocontext.Context, engine *query.Engine, systemPrompt interface{}) error {
-	fmt.Print(oculustui.RenderSplash(80))
-	fmt.Println("Type your message and press Enter. Ctrl+C to exit.")
-	fmt.Println()
-
-	var messages []types.Message
-	scanner := bufio.NewScanner(os.Stdin)
-	scanner.Buffer(make([]byte, 1024*1024), 1024*1024)
-
-	for {
-		fmt.Print("> ")
-		if !scanner.Scan() {
-			break
-		}
-		input := strings.TrimSpace(scanner.Text())
-		if input == "" {
-			continue
-		}
-		if input == "/quit" || input == "/exit" {
-			break
-		}
-
-		messages = append(messages, types.NewUserMessage(input))
-		handler := &PrintStreamHandler{}
-		var err error
-		messages, err = engine.RunQuery(ctx, messages, systemPrompt, handler)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "\nError: %v\n", err)
-		}
-		fmt.Println()
-	}
-	return nil
 }
 
 // PrintStreamHandler prints streamed text to stdout
@@ -182,15 +149,3 @@ func (h *PrintStreamHandler) OnComplete(stopReason types.StopReason, usage *type
 	}
 }
 func (h *PrintStreamHandler) OnError(err error) { fmt.Fprintf(os.Stderr, "\nError: %v\n", err) }
-
-func buildSystemPrompt(systemCtx, userCtx map[string]string) interface{} {
-	var parts []string
-	parts = append(parts, "You are Oculus, an AI coding assistant powered by Claude. You help users with software engineering tasks.")
-	for _, v := range userCtx {
-		parts = append(parts, v)
-	}
-	for _, v := range systemCtx {
-		parts = append(parts, v)
-	}
-	return strings.Join(parts, "\n\n")
-}

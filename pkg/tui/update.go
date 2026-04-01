@@ -212,11 +212,18 @@ func (m Model) updatePermission(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-// runQuery launches the query engine in a goroutine
+// runQuery launches the query engine in a goroutine.
+// Uses lensManager for intelligent routing when available, falling back to engine.
 func (m Model) runQuery(ctx context.Context) tea.Cmd {
 	return func() tea.Msg {
 		handler := &TUIStreamHandler{Program: m.program}
-		msgs, err := m.engine.RunQuery(ctx, m.messages, m.systemPrompt, handler)
+		var msgs []types.Message
+		var err error
+		if m.lensManager != nil {
+			msgs, err = m.lensManager.RunQuery(ctx, m.messages, m.systemPrompt, handler)
+		} else {
+			msgs, err = m.engine.RunQuery(ctx, m.messages, m.systemPrompt, handler)
+		}
 		return ResponseMsg{Messages: msgs, Err: err}
 	}
 }
