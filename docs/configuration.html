@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Configuration - Oculus</title><link rel="stylesheet" href="style.css"></head>
+<body>
+<nav><a href="index.html">Home</a> <a href="getting-started.html">Getting Started</a> <a href="features.html">Features</a> <a href="architecture.html">Architecture</a> <a href="configuration.html">Configuration</a> <a href="commands.html">Commands</a></nav>
+<main>
+<h1>Configuration</h1>
+<section><h2>Config Directory</h2>
+<p>Default: <code>~/.oculus/</code>. Override with <code>OCULUS_CONFIG_DIR</code> env var.</p>
+<p>Migrates automatically from <code>~/.claude/</code> on first run.</p></section>
+<section><h2>settings.json</h2>
+<pre><code>{
+  "defaultMode": "default",
+  "model": "claude-sonnet-4-20250514",
+  "theme": "dark",
+  "verbose": false,
+  "lenses": {
+    "focus": { "model": "claude-opus-4-20250514", "provider": "anthropic" },
+    "scan": { "model": "claude-sonnet-4-20250514", "provider": "anthropic" },
+    "craft": { "model": "codellama:13b", "provider": "ollama" }
+  },
+  "hooks": {
+    "PreToolUse": [{ "matcher": "Bash", "command": "echo checking..." }]
+  },
+  "mcpServers": {
+    "context7": { "command": "npx -y @upstash/context7-mcp" }
+  }
+}</code></pre></section>
+<section><h2>OCULUS.md</h2>
+<p>Project-specific instructions loaded into every system prompt. Place at project root or <code>.oculus/OCULUS.md</code>.</p>
+<p>Also reads <code>CLAUDE.md</code> as fallback for compatibility.</p>
+<p>Supports <code>@include path/to/file.md</code> directives.</p></section>
+<section><h2>Environment Variables</h2>
+<table><tr><th>Variable</th><th>Description</th></tr>
+<tr><td><code>ANTHROPIC_API_KEY</code></td><td>API key (skips OAuth login)</td></tr>
+<tr><td><code>OCULUS_CONFIG_DIR</code></td><td>Custom config directory</td></tr>
+<tr><td><code>OPENAI_API_KEY</code></td><td>For OpenAI bridge provider</td></tr>
+</table></section>
+<section><h2>Permission Modes</h2>
+<table><tr><th>Mode</th><th>Behavior</th></tr>
+<tr><td><code>default</code></td><td>Ask for most operations</td></tr>
+<tr><td><code>acceptEdits</code></td><td>Auto-approve file edits, ask for shell commands</td></tr>
+<tr><td><code>bypassPermissions</code></td><td>Allow everything (use with caution)</td></tr>
+<tr><td><code>plan</code></td><td>Read-only, planning only</td></tr>
+</table></section>
+</main>
+</body></html>

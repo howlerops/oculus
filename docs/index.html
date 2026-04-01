@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Oculus — Go-Native AI Coding CLI</title>
+  <meta name="description" content="Oculus is a Go-native AI coding CLI with multi-model lens routing, 6 provider bridges, 40 built-in tools, and a full terminal UI. 21 MB. Zero runtime deps." />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="icon" href="favicon.png" type="image/png" />
+</head>
+<body>
+
+<!-- ─── Navigation ─────────────────────────────────────────── -->
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <div class="logo-icon">O</div>
+      Oculus
+    </a>
+    <ul class="nav-links">
+      <li><a href="getting-started.html">Getting Started</a></li>
+      <li><a href="features.html">Features</a></li>
+      <li><a href="architecture.html">Architecture</a></li>
+      <li><a href="configuration.html">Configuration</a></li>
+      <li><a href="commands.html">Commands</a></li>
+      <li><a href="https://github.com/howlerops/oculus" class="nav-cta">GitHub</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- ─── Hero ───────────────────────────────────────────────── -->
+<section class="hero">
+  <div class="container">
+    <div class="hero-eyebrow">
+      <span>&#9679;</span> Go-Native AI Coding CLI by HowlerOps
+    </div>
+    <h1><span class="gradient">Oculus</span></h1>
+    <p class="hero-tagline">
+      A fast, self-contained AI coding assistant that lives entirely in your terminal.
+      Multi-model routing, 6 provider bridges, 40 built-in tools — shipped as a single 21&nbsp;MB binary.
+    </p>
+    <div class="hero-actions">
+      <a href="getting-started.html" class="btn btn-primary">Get Started &rarr;</a>
+      <a href="features.html" class="btn btn-outline">Explore Features</a>
+    </div>
+
+    <!-- Install snippet -->
+    <div style="max-width:600px;margin:0 auto;">
+      <div class="terminal">
+        <div class="terminal-bar">
+          <div class="terminal-dot"></div>
+          <div class="terminal-dot"></div>
+          <div class="terminal-dot"></div>
+          <span class="terminal-title">Quick Install</span>
+        </div>
+        <div class="terminal-body">
+          <div><span class="prompt">$</span> <span class="cmd">go install github.com/howlerops/oculus/cmd/oculus@latest</span></div>
+          <div class="out" style="margin:0.5rem 0;">— or —</div>
+          <div><span class="prompt">$</span> <span class="cmd">brew install howlerops/tap/oculus</span></div>
+          <div class="out" style="margin:0.5rem 0;">— or —</div>
+          <div><span class="prompt">$</span> <span class="cmd">npm i -g @howlerops/oculus</span></div>
+          <div style="margin-top:1rem;"><span class="prompt">$</span> <span class="cmd">oculus</span></div>
+          <div class="info">&#9670; Oculus v1.0.0 ready  &bull;  lens: focus  &bull;  model: claude-sonnet-4-5</div>
+          <div class="ok">&#10003; Authenticated via OAuth</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="hero-stats">
+      <div class="stat"><div class="stat-value">21MB</div><div class="stat-label">Single binary</div></div>
+      <div class="stat"><div class="stat-value">40</div><div class="stat-label">Built-in tools</div></div>
+      <div class="stat"><div class="stat-value">54</div><div class="stat-label">Slash commands</div></div>
+      <div class="stat"><div class="stat-value">6</div><div class="stat-label">Provider bridges</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── Feature Highlights ─────────────────────────────────── -->
+<section class="section" style="background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border);">
+  <div class="container">
+    <div class="section-header">
+      <span class="label">What makes Oculus different</span>
+      <h2>Built for how developers actually work</h2>
+      <p>No cloud syncing, no Electron, no runtime. Just a compiled binary that talks to the AI providers you already use.</p>
+    </div>
+    <div class="grid-3">
+
+      <div class="card">
+        <div class="card-icon">&#127981;</div>
+        <h3>Multi-Model Lens Routing</h3>
+        <p>Three purpose-built lenses — <strong>Focus</strong> for deep reasoning, <strong>Scan</strong> for fast exploration, <strong>Craft</strong> for code generation — automatically route to the right model and provider for the task.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-icon">&#128268;</div>
+        <h3>6 Provider Bridges</h3>
+        <p>Anthropic, OpenAI-compatible, Ollama (local), Claude CLI, Codex CLI, and Gemini CLI — swap providers without changing your workflow. Each bridge handles auth, streaming, and tool-use natively.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-icon">&#128296;</div>
+        <h3>40 Built-In Tools</h3>
+        <p>Bash execution, file read/write/edit/glob/grep, web search, sub-agent dispatch, git operations, LSP integration, and more — all wired directly into the model's tool-use protocol.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-icon">&#128204;</div>
+        <h3>Episode-Based Context</h3>
+        <p>Conversations are persisted as typed episodes. LCM dual-threshold compaction automatically summarises old context, keeping the window fresh without losing history.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-icon">&#128187;</div>
+        <h3>Full Terminal UI</h3>
+        <p>Bubbletea-powered TUI with inline markdown rendering, syntax-highlighted code blocks, permission dialogs, vim keybindings, and a model/slot bar — all in 80 columns.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-icon">&#128274;</div>
+        <h3>Secure by Default</h3>
+        <p>OAuth PKCE authentication with OS keychain storage. Bash security layer with allowlist/blocklist patterns. Shell injection protection built into every tool execution.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ─── Quick Start ────────────────────────────────────────── -->
+<section class="section">
+  <div class="container">
+    <div class="section-header">
+      <span class="label">Zero to first response in 60 seconds</span>
+      <h2>Up and running fast</h2>
+      <p>Three install paths, one command to start. Oculus auto-detects your API keys and walks you through auth on first run.</p>
+    </div>
+
+    <div style="max-width:800px;margin:0 auto;">
+      <div class="grid-3" style="margin-bottom:2rem;">
+        <div style="text-align:center;padding:1.25rem;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);">
+          <div style="font-size:1.75rem;margin-bottom:0.5rem;">&#128570;</div>
+          <strong style="display:block;margin-bottom:0.25rem;color:var(--accent);">Go</strong>
+          <code style="font-size:0.75rem;">go install ...@latest</code>
+        </div>
+        <div style="text-align:center;padding:1.25rem;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);">
+          <div style="font-size:1.75rem;margin-bottom:0.5rem;">&#127866;</div>
+          <strong style="display:block;margin-bottom:0.25rem;color:var(--accent);">Homebrew</strong>
+          <code style="font-size:0.75rem;">brew install ...</code>
+        </div>
+        <div style="text-align:center;padding:1.25rem;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);">
+          <div style="font-size:1.75rem;margin-bottom:0.5rem;">&#128230;</div>
+          <strong style="display:block;margin-bottom:0.25rem;color:var(--accent);">npm</strong>
+          <code style="font-size:0.75rem;">npm i -g ...</code>
+        </div>
+      </div>
+
+      <div class="terminal">
+        <div class="terminal-bar">
+          <div class="terminal-dot"></div>
+          <div class="terminal-dot"></div>
+          <div class="terminal-dot"></div>
+          <span class="terminal-title">oculus — interactive session</span>
+        </div>
+        <div class="terminal-body">
+          <div><span class="prompt">$</span> <span class="cmd">oculus</span></div>
+          <div class="info">&#9670; Oculus v1.0.0  lens:focus  model:claude-sonnet-4-5  tools:40</div>
+          <br>
+          <div><span class="prompt">&gt;</span> <span class="cmd">Refactor the auth package to use interface injection</span></div>
+          <div class="out">&#9670; Reading pkg/auth/...</div>
+          <div class="out">&#9670; Analysing 6 files, 842 lines</div>
+          <div class="info">&#10003; Here's the refactored interface — 3 files changed, tests updated.</div>
+          <br>
+          <div><span class="prompt">&gt;</span> <span class="cmd">oculus -p "explain the lens routing system" --lens scan</span></div>
+          <div class="out">&#9670; Scan lens active (fast exploration mode)</div>
+        </div>
+      </div>
+
+      <div style="text-align:center;margin-top:2rem;">
+        <a href="getting-started.html" class="btn btn-primary">Full Getting Started Guide &rarr;</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── Provider Grid ──────────────────────────────────────── -->
+<section class="section" style="background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border);">
+  <div class="container">
+    <div class="section-header">
+      <span class="label">Provider support</span>
+      <h2>Your models. Your infrastructure.</h2>
+      <p>Oculus ships bridges for every major AI provider and supports fully local inference through Ollama.</p>
+    </div>
+    <div class="grid-3" style="max-width:900px;margin:0 auto;">
+      <div class="card" style="display:flex;flex-direction:column;gap:0.5rem;">
+        <span class="badge badge-primary" style="width:fit-content;">API</span>
+        <h3>Anthropic</h3>
+        <p>Claude 3 / 3.5 / 4 family. Native streaming, extended thinking, and tool-use.</p>
+      </div>
+      <div class="card" style="display:flex;flex-direction:column;gap:0.5rem;">
+        <span class="badge badge-accent" style="width:fit-content;">API</span>
+        <h3>OpenAI-Compatible</h3>
+        <p>GPT-4o, o3, and any provider exposing the OpenAI Chat Completions spec.</p>
+      </div>
+      <div class="card" style="display:flex;flex-direction:column;gap:0.5rem;">
+        <span class="badge badge-success" style="width:fit-content;">Local</span>
+        <h3>Ollama</h3>
+        <p>Run Llama 3, Mistral, Qwen, and hundreds of open models entirely on-device.</p>
+      </div>
+      <div class="card" style="display:flex;flex-direction:column;gap:0.5rem;">
+        <span class="badge badge-muted" style="width:fit-content;">CLI</span>
+        <h3>Claude CLI</h3>
+        <p>Delegates to the Anthropic <code>claude</code> CLI binary when present.</p>
+      </div>
+      <div class="card" style="display:flex;flex-direction:column;gap:0.5rem;">
+        <span class="badge badge-muted" style="width:fit-content;">CLI</span>
+        <h3>Codex CLI</h3>
+        <p>OpenAI Codex bridge via subprocess, with streamed output forwarding.</p>
+      </div>
+      <div class="card" style="display:flex;flex-direction:column;gap:0.5rem;">
+        <span class="badge badge-muted" style="width:fit-content;">CLI</span>
+        <h3>Gemini CLI</h3>
+        <p>Google Gemini via the <code>gemini</code> CLI bridge with full tool routing.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── CTA ────────────────────────────────────────────────── -->
+<section class="section">
+  <div class="container" style="text-align:center;">
+    <h2 style="margin-bottom:1rem;">Ready to try Oculus?</h2>
+    <p style="color:var(--muted);max-width:480px;margin:0 auto 2rem;">
+      Install in seconds. No sign-up required — just bring your own API key or use an Ollama local model.
+    </p>
+    <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;">
+      <a href="getting-started.html" class="btn btn-primary">Get Started &rarr;</a>
+      <a href="https://github.com/howlerops/oculus" class="btn btn-outline">View on GitHub</a>
+      <a href="architecture.html" class="btn btn-ghost">Architecture Docs</a>
+    </div>
+  </div>
+</section>
+
+<!-- ─── Footer ─────────────────────────────────────────────── -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a href="index.html" class="nav-logo" style="font-size:1.1rem;">
+          <div class="logo-icon">O</div>
+          Oculus
+        </a>
+        <p>Go-native AI coding CLI by HowlerOps. Open source, zero runtime dependencies.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Docs</h4>
+        <ul>
+          <li><a href="getting-started.html">Getting Started</a></li>
+          <li><a href="features.html">Features</a></li>
+          <li><a href="configuration.html">Configuration</a></li>
+          <li><a href="commands.html">Commands</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Learn</h4>
+        <ul>
+          <li><a href="architecture.html">Architecture</a></li>
+          <li><a href="features.html#lens-system">Lens System</a></li>
+          <li><a href="features.html#providers">Providers</a></li>
+          <li><a href="features.html#mcp">MCP Support</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Project</h4>
+        <ul>
+          <li><a href="https://github.com/howlerops/oculus">GitHub</a></li>
+          <li><a href="https://github.com/howlerops/oculus/releases">Releases</a></li>
+          <li><a href="https://github.com/howlerops/oculus/issues">Issues</a></li>
+          <li><a href="https://github.com/howlerops/oculus/blob/main/LICENSE">License</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2025 HowlerOps. Released under the MIT License.</p>
+      <p>Built with Go &bull; Bubbletea &bull; Love for the terminal</p>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

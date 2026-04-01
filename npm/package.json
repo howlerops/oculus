@@ -1,0 +1,21 @@
+{
+  "name": "@howlerops/oculus",
+  "version": "0.3.0",
+  "description": "Oculus - Go-native AI coding CLI with multi-model lens architecture",
+  "bin": {
+    "oculus": "./bin/run.js"
+  },
+  "scripts": {
+    "postinstall": "node bin/install.js"
+  },
+  "keywords": ["ai", "coding", "cli", "llm", "oculus", "howlerops"],
+  "author": "HowlerOps",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/howlerops/oculus.git"
+  },
+  "homepage": "https://howlerops.github.io/oculus",
+  "os": ["darwin", "linux", "win32"],
+  "cpu": ["x64", "arm64"]
+}

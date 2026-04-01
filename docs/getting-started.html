@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Getting Started — Oculus</title>
+  <meta name="description" content="Install Oculus, authenticate, and run your first AI coding session in under two minutes." />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="icon" href="favicon.png" type="image/png" />
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <div class="logo-icon">O</div>
+      Oculus
+    </a>
+    <ul class="nav-links">
+      <li><a href="getting-started.html" class="active">Getting Started</a></li>
+      <li><a href="features.html">Features</a></li>
+      <li><a href="architecture.html">Architecture</a></li>
+      <li><a href="configuration.html">Configuration</a></li>
+      <li><a href="commands.html">Commands</a></li>
+      <li><a href="https://github.com/howlerops/oculus" class="nav-cta">GitHub</a></li>
+    </ul>
+  </div>
+</nav>
+
+<div class="page-header">
+  <div class="container">
+    <span class="label">Documentation</span>
+    <h1>Getting Started</h1>
+    <p>Install Oculus, authenticate, and run your first AI coding session in under two minutes.</p>
+  </div>
+</div>
+
+<div class="container">
+  <div class="content-layout">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <ul class="sidebar-nav">
+        <li><span class="section-label">Install</span></li>
+        <li><a href="#installation">Installation</a></li>
+        <li><a href="#go-install">Via go install</a></li>
+        <li><a href="#brew">Via Homebrew</a></li>
+        <li><a href="#npm">Via npm</a></li>
+        <li><span class="section-label">First Run</span></li>
+        <li><a href="#auth">Authentication</a></li>
+        <li><a href="#api-key">API Key Setup</a></li>
+        <li><span class="section-label">Basic Usage</span></li>
+        <li><a href="#repl">Interactive REPL</a></li>
+        <li><a href="#print-mode">Print Mode</a></li>
+        <li><a href="#oculus-md">OCULUS.md</a></li>
+        <li><a href="#next-steps">Next Steps</a></li>
+      </ul>
+    </aside>
+
+    <!-- Main content -->
+    <main class="doc-content">
+
+      <h2 id="installation">Installation</h2>
+      <p>Oculus ships as a single statically-linked binary with no runtime dependencies. Pick the install path that suits your environment.</p>
+
+      <h3 id="go-install">Via <code>go install</code></h3>
+      <p>Requires Go 1.22 or later. This is the canonical install path and always pulls the latest stable release.</p>
+      <div class="code-block">
+        <pre><code>go install github.com/howlerops/oculus/cmd/oculus@latest</code></pre>
+      </div>
+      <p>The binary is placed in <code>$GOPATH/bin</code> (usually <code>~/go/bin</code>). Make sure that directory is on your <code>$PATH</code>:</p>
+      <div class="code-block">
+        <pre><code>export PATH="$PATH:$(go env GOPATH)/bin"</code></pre>
+      </div>
+
+      <h3 id="brew">Via Homebrew</h3>
+      <p>Recommended for macOS and Linux users who prefer a managed install with automatic updates.</p>
+      <div class="code-block">
+        <pre><code>brew install howlerops/tap/oculus</code></pre>
+      </div>
+      <p>To upgrade later:</p>
+      <div class="code-block">
+        <pre><code>brew upgrade oculus</code></pre>
+      </div>
+
+      <h3 id="npm">Via npm</h3>
+      <p>For Node.js developers who want Oculus in a project's dev dependencies or alongside frontend tooling.</p>
+      <div class="code-block">
+        <pre><code># Global install
+npm install -g @howlerops/oculus
+
+# Or add to a project
+npm install --save-dev @howlerops/oculus
+npx oculus</code></pre>
+      </div>
+
+      <div class="callout callout-info">
+        <span class="callout-icon">&#8505;</span>
+        <div>
+          <strong>Verify your install</strong>
+          <p>Run <code>oculus --version</code> to confirm the binary is on your PATH and print the version string.</p>
+        </div>
+      </div>
+
+      <hr class="divider" />
+
+      <h2 id="auth">Authentication — First Run</h2>
+      <p>On first launch Oculus checks for credentials and walks you through the auth flow if none are found.</p>
+
+      <div class="terminal">
+        <div class="terminal-bar">
+          <div class="terminal-dot"></div><div class="terminal-dot"></div><div class="terminal-dot"></div>
+          <span class="terminal-title">First run</span>
+        </div>
+        <div class="terminal-body">
+          <div><span class="prompt">$</span> <span class="cmd">oculus</span></div>
+          <div class="info">&#9670; Oculus v1.0.0</div>
+          <div class="out">No credentials found. Starting OAuth login...</div>
+          <div class="out">Opening browser to https://console.anthropic.com/oauth/authorize?...</div>
+          <div class="out">Waiting for callback on localhost:9876  (Ctrl-C to cancel)</div>
+          <div class="ok">&#10003; Authenticated as you@example.com</div>
+          <div class="ok">&#10003; Token stored in system keychain</div>
+          <div class="info">&#9670; lens:focus  model:claude-sonnet-4-5  tools:40</div>
+          <div><span class="prompt">&gt;</span> <span class="cmd">_</span></div>
+        </div>
+      </div>
+
+      <p>The OAuth flow uses <strong>PKCE</strong> (Proof Key for Code Exchange) — no client secret is ever stored on disk. After consent, the access token is placed in your OS keychain (Keychain on macOS, libsecret on Linux, Credential Manager on Windows).</p>
+
+      <h3 id="api-key">Using an API Key Instead</h3>
+      <p>If you prefer explicit API key auth, set the appropriate environment variable before launching:</p>
+
+      <div class="code-block">
+        <pre><code># Anthropic
+export ANTHROPIC_API_KEY="sk-ant-..."
+
+# OpenAI-compatible provider
+export OPENAI_API_KEY="sk-..."
+export OPENAI_BASE_URL="https://api.openai.com/v1"   # optional, defaults to OpenAI
+
+# Ollama (no key required — just set the host)
+export OLLAMA_HOST="http://localhost:11434"</code></pre>
+      </div>
+
+      <p>Environment variables always take precedence over the keychain. You can also persist them in <code>~/.oculus/settings.json</code> — see the <a href="configuration.html">Configuration</a> reference.</p>
+
+      <hr class="divider" />
+
+      <h2 id="repl">Interactive REPL</h2>
+      <p>Running <code>oculus</code> with no arguments opens the interactive REPL — a full TUI with history, markdown rendering, and tool-execution output.</p>
+
+      <div class="code-block">
+        <pre><code>oculus</code></pre>
+      </div>
+
+      <p>Key bindings in the REPL:</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Key</th><th>Action</th></tr></thead>
+          <tbody>
+            <tr><td><code>Enter</code></td><td>Submit message</td></tr>
+            <tr><td><code>Shift+Enter</code></td><td>Insert newline</td></tr>
+            <tr><td><code>Ctrl+C</code></td><td>Cancel current generation / quit if idle</td></tr>
+            <tr><td><code>Ctrl+L</code></td><td>Clear screen</td></tr>
+            <tr><td><code>Up / Down</code></td><td>Navigate message history</td></tr>
+            <tr><td><code>Tab</code></td><td>Autocomplete slash command</td></tr>
+            <tr><td><code>Esc</code> (vim mode)</td><td>Enter normal mode</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>Type <code>/help</code> at the prompt to see all 54 slash commands. See the full <a href="commands.html">Commands Reference</a> for descriptions.</p>
+
+      <hr class="divider" />
+
+      <h2 id="print-mode">Print Mode</h2>
+      <p>Use the <code>-p</code> / <code>--print</code> flag to send a single prompt and print the response to stdout — useful for scripts, pipes, and one-off queries.</p>
+
+      <div class="code-block">
+        <pre><code># Basic one-shot query
+oculus -p "What does this function do?" &lt; pkg/auth/token.go
+
+# Pipe output
+oculus -p "Summarise this diff" &lt; &lt;(git diff HEAD~1)
+
+# Choose a lens
+oculus -p "Scan the repo for unused exports" --lens scan
+
+# Choose a specific model
+oculus -p "Refactor with generics" --model gpt-4o --provider openai
+
+# Output raw text (no TUI chrome)
+oculus -p "Generate a Makefile" --raw &gt; Makefile</code></pre>
+      </div>
+
+      <div class="callout callout-warning">
+        <span class="callout-icon">&#9888;</span>
+        <div>
+          <strong>Tool execution in print mode</strong>
+          <p>File-writing tools are disabled by default in print mode. Pass <code>--allow-writes</code> to enable them. Bash execution still prompts for confirmation unless <code>--yes</code> is set.</p>
+        </div>
+      </div>
+
+      <hr class="divider" />
+
+      <h2 id="oculus-md">OCULUS.md — Project Instructions</h2>
+      <p>Create an <code>OCULUS.md</code> file in your project root (or any parent directory) to give Oculus persistent context about your codebase. It is loaded automatically on every session start.</p>
+
+      <div class="code-block">
+        <pre><code># OCULUS.md
+
+## Project: acme-api
+
+Go 1.22 REST API using Chi router and sqlc for database access.
+
+## Conventions
+- Use `errors.New` from `pkg/errors`, not the stdlib
+- All handlers live in `internal/handlers/`
+- Tests use `testify/require`, never `assert`
+- Run `make lint` before committing
+
+## Out of scope
+- Do not modify `vendor/` or `generated/`
+- Do not alter migration files; create new ones instead
+
+## Useful commands
+- `make dev`     — hot-reload dev server
+- `make test`    — full test suite
+- `make lint`    — golangci-lint</code></pre>
+      </div>
+
+      <div class="callout callout-success">
+        <span class="callout-icon">&#10003;</span>
+        <div>
+          <strong>CLAUDE.md compatibility</strong>
+          <p>Oculus also reads <code>CLAUDE.md</code> files if <code>OCULUS.md</code> is absent, making it easy to adopt Oculus in projects that already have one.</p>
+        </div>
+      </div>
+
+      <hr class="divider" />
+
+      <h2 id="next-steps">Next Steps</h2>
+      <div class="grid-2" style="margin-top:1rem;">
+        <a href="features.html" class="card" style="text-decoration:none;color:inherit;">
+          <div class="card-icon">&#10024;</div>
+          <h3>Explore Features</h3>
+          <p>Lens system, 40 tools, MCP support, episode context, and more.</p>
+        </a>
+        <a href="configuration.html" class="card" style="text-decoration:none;color:inherit;">
+          <div class="card-icon">&#9881;</div>
+          <h3>Configuration</h3>
+          <p>Tune settings.json, environment variables, hooks, and per-lens model assignment.</p>
+        </a>
+        <a href="commands.html" class="card" style="text-decoration:none;color:inherit;">
+          <div class="card-icon">&#47;</div>
+          <h3>Commands Reference</h3>
+          <p>All 54 slash commands with descriptions and usage examples.</p>
+        </a>
+        <a href="architecture.html" class="card" style="text-decoration:none;color:inherit;">
+          <div class="card-icon">&#128336;</div>
+          <h3>Architecture</h3>
+          <p>Deep dive into the package structure, lens routing, and episode store.</p>
+        </a>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-bottom">
+      <p>&copy; 2025 HowlerOps. Released under the MIT License.</p>
+      <p><a href="index.html">Home</a> &bull; <a href="https://github.com/howlerops/oculus">GitHub</a></p>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

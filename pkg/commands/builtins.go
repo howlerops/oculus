@@ -119,7 +119,7 @@ func RegisterBuiltins(reg *Registry) {
 		Name:        "version",
 		Description: "Show version information",
 		Run: func(_ context.Context, _ string) (string, bool, error) {
-			return "claude-go v0.1.0 (Go port)", false, nil
+			return "oculus v0.3.0", false, nil
 		},
 	})
 
@@ -703,7 +703,7 @@ alias ccc='claude --continue'
 				return "Usage: /issue <title>\nOpens a new GitHub issue. Requires 'gh' CLI.", false, nil
 			}
 			// Try gh CLI
-			out, err := exec.Command("gh", "issue", "create", "--title", args, "--body", "Filed via claude-go /issue command").CombinedOutput()
+			out, err := exec.Command("gh", "issue", "create", "--title", args, "--body", "Filed via oculus /issue command").CombinedOutput()
 			if err != nil {
 				// Fall back to browser URL
 				repoOut, _ := exec.Command("git", "remote", "get-url", "origin").Output()

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Features - Oculus</title><link rel="stylesheet" href="style.css"></head>
+<body>
+<nav><a href="index.html">Home</a> <a href="getting-started.html">Getting Started</a> <a href="features.html">Features</a> <a href="architecture.html">Architecture</a> <a href="configuration.html">Configuration</a> <a href="commands.html">Commands</a></nav>
+<main>
+<h1>Features</h1>
+<section><h2>40 Built-in Tools</h2><p>Oculus ships with 40 tools covering every aspect of software development:</p>
+<ul>
+<li><strong>File Operations</strong>: Read, Write, Edit (exact string replacement), Glob (pattern match), Grep (ripgrep-powered search)</li>
+<li><strong>Shell</strong>: Bash execution with timeout, background mode, and security analysis</li>
+<li><strong>Web</strong>: WebSearch (real-time), WebFetch (URL content extraction)</li>
+<li><strong>Orchestration</strong>: Agent (subagent spawning), TeamCreate/Delete/SendMessage, TaskCreate/Update/List</li>
+<li><strong>Planning</strong>: EnterPlanMode, ExitPlanMode, EnterWorktree, ExitWorktree</li>
+<li><strong>Code Intelligence</strong>: LSP, NotebookEdit, ToolSearch, Skill invocation</li>
+<li><strong>Configuration</strong>: Config, AskUserQuestion, TodoWrite</li>
+</ul></section>
+<section><h2>Multi-Model Lens System</h2><p>Oculus routes work through three specialized lenses:</p>
+<ul>
+<li><strong>Focus</strong> — Main reasoning, planning, orchestration. Routes: Agent, TeamCreate, EnterPlanMode, AskUserQuestion</li>
+<li><strong>Scan</strong> — Exploration and research. Routes: Read, Glob, Grep, WebSearch, LSP</li>
+<li><strong>Craft</strong> — Code execution and modification. Routes: Bash, Edit, Write, NotebookEdit</li>
+</ul>
+<p>Each lens can target a different model and provider. Use Opus for Focus, Sonnet for Scan, and a local Ollama model for Craft.</p></section>
+<section><h2>6 Provider Bridges</h2>
+<ul>
+<li><strong>Anthropic</strong> — Direct API (Claude Opus, Sonnet, Haiku)</li>
+<li><strong>OpenAI</strong> — OpenAI API (GPT-4, GPT-4o)</li>
+<li><strong>Ollama</strong> — Local models (Llama, Mistral, CodeLlama)</li>
+<li><strong>Claude CLI</strong> — Use your Claude Pro/Max subscription</li>
+<li><strong>Codex CLI</strong> — Use your OpenAI subscription</li>
+<li><strong>Gemini CLI</strong> — Use your Google subscription</li>
+</ul></section>
+<section><h2>Context Management</h2><p>Episode-based compaction with LCM dual-threshold engine:</p>
+<ul>
+<li>Below τ_soft (70%): Zero overhead</li>
+<li>τ_soft to τ_hard (70-90%): Async compaction between turns</li>
+<li>Above τ_hard (90%): Blocking compaction before next API call</li>
+</ul>
+<p>TF-IDF keyword extraction preserves the most important content during compaction.</p></section>
+<section><h2>Terminal UI</h2>
+<ul>
+<li>Permission dialog (approve/deny/always-allow)</li>
+<li>Markdown rendering with syntax highlighting (glamour)</li>
+<li>Tool call badges with colored display</li>
+<li>Per-tool progress spinners</li>
+<li>Multi-line input with Ctrl+R history search</li>
+<li>Scrollable viewport with mouse wheel</li>
+<li>Task panel, status bar, context usage bar</li>
+<li>Vim mode with motions and operators</li>
+</ul></section>
+<section><h2>Security</h2>
+<ul>
+<li>Bash command safety analysis (24 dangerous patterns)</li>
+<li>Full permission system (allow/deny/ask rules with glob matching)</li>
+<li>Mode-based defaults (default, acceptEdits, bypassPermissions, plan)</li>
+<li>OAuth PKCE authentication with macOS Keychain storage</li>
+<li>SSRF guard on HTTP hooks</li>
+</ul></section>
+</main>
+</body></html>

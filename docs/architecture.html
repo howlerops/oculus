@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Architecture - Oculus</title><link rel="stylesheet" href="style.css"></head>
+<body>
+<nav><a href="index.html">Home</a> <a href="getting-started.html">Getting Started</a> <a href="features.html">Features</a> <a href="architecture.html">Architecture</a> <a href="configuration.html">Configuration</a> <a href="commands.html">Commands</a></nav>
+<main>
+<h1>Architecture</h1>
+<section><h2>Package Structure</h2>
+<pre><code>cmd/oculus/          CLI entry point (cobra)
+pkg/
+├── api/             Anthropic API client (SSE streaming, retry)
+├── auth/            OAuth PKCE, keychain, trust dialog
+├── bridge/          Multi-provider bridge (Anthropic, OpenAI, Ollama, CLI)
+├── commands/        54 slash commands
+├── config/          Settings, loader, merge pipeline, validation
+├── constants/       Product info, models, limits, OAuth
+├── context/         System prompt, OCULUS.md, git helpers
+├── entrypoints/     SDK, print, headless, MCP server modes
+├── hooks/           Hook engine (command, HTTP, lifecycle)
+├── lens/            Focus/Scan/Craft lens routing
+├── memdir/          Auto-memory directory
+├── migrations/      Data migration framework
+├── query/           Conversation loop + tool dispatch
+├── services/
+│   ├── analytics/   Event logging
+│   ├── bridge/      Remote session protocol
+│   ├── compact/     Context compaction (RLM-inspired TF-IDF)
+│   ├── cost/        Token cost tracking
+│   ├── episodes/    Episode store + LCM context loop
+│   ├── history/     Conversation history
+│   ├── mcp/         MCP client (stdio + HTTP)
+│   ├── memory/      Session memory extraction
+│   ├── notifications/ OS notifications
+│   ├── plugins/     Plugin loader
+│   ├── policylimits/ Enterprise policy
+│   ├── ratelimit/   Rate limit tracking
+│   ├── sessions/    Session persistence
+│   ├── tokencount/  Token estimation
+│   └── toolsummary/ Tool use summaries
+├── skills/          Skill loader
+├── state/           Thread-safe AppState store
+├── task/            Background task system
+├── tool/            Tool interface + BaseTool
+├── tools/           40 tool implementations
+├── tui/             Bubbletea terminal UI (16 files)
+├── types/           Core types (message, permission, hooks)
+└── utils/           Utilities (permissions, git, bash, format, array)
+</code></pre></section>
+<section><h2>Lens System</h2>
+<p>The three-lens architecture routes different types of work to specialized model configurations:</p>
+<pre><code>User Message → LensRouter → Focus/Scan/Craft
+                              ↓
+                         LensWorker (per-lens model + persona)
+                              ↓
+                         Bridge (Anthropic/OpenAI/Ollama/CLI)
+                              ↓
+                         API Response → Tool Dispatch → Results
+</code></pre></section>
+<section><h2>Query Engine</h2>
+<p>The core conversation loop:</p>
+<ol>
+<li>Build API request (messages + system prompt + tools)</li>
+<li>Stream response via SSE</li>
+<li>If tool_use: dispatch tools (concurrent for safe tools)</li>
+<li>Collect results, re-submit to API</li>
+<li>Track episodes, check context thresholds</li>
+<li>Repeat until end_turn or max_tokens</li>
+</ol></section>
+<section><h2>Episode-Based Context Management</h2>
+<pre><code>Active Episode → Messages accumulate
+                    ↓ (τ_soft threshold)
+Compacted Episode → Summary + keywords (messages freed)
+                    ↓ (age/count threshold)
+Archived Episode → Deep compression
+</code></pre>
+<p>Episodes are the handoff format between lenses. When Focus delegates to Scan, the episode summary is passed as context.</p></section>
+</main>
+</body></html>

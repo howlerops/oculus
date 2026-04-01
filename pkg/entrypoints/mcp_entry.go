@@ -8,7 +8,7 @@ import (
 	"os"
 )
 
-// MCPEntrypoint runs claude-go as an MCP server (stdio transport)
+// MCPEntrypoint runs oculus as an MCP server (stdio transport)
 type MCPEntrypoint struct {
 	SDK *SDKRunner
 }
@@ -37,7 +37,7 @@ func (m *MCPEntrypoint) Run(ctx context.Context) error {
 			mcpRespond(id, map[string]interface{}{
 				"protocolVersion": "2024-11-05",
 				"capabilities":    map[string]interface{}{"tools": map[string]interface{}{}},
-				"serverInfo":      map[string]interface{}{"name": "claude-go", "version": "0.1.0"},
+				"serverInfo":      map[string]interface{}{"name": "oculus", "version": "0.3.0"},
 			})
 		case "tools/list":
 			mcpRespond(id, map[string]interface{}{"tools": []interface{}{}})

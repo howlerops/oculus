@@ -43,7 +43,7 @@ func GetAuthToken(ctx context.Context, interactive bool) (string, error) {
 
 	// 3. Interactive login
 	if !interactive {
-		return "", fmt.Errorf("no API key found. Set ANTHROPIC_API_KEY or run 'claude-go' interactively to login")
+		return "", fmt.Errorf("no API key found. Set ANTHROPIC_API_KEY or run 'oculus' interactively to login")
 	}
 
 	fmt.Println("No API key found. Starting login flow...")

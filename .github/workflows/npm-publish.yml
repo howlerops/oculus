@@ -1,0 +1,39 @@
+name: Publish npm
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+
+      - name: Build binaries for npm
+        run: |
+          mkdir -p npm/bin
+          GOOS=darwin GOARCH=arm64 go build -o npm/bin/oculus-darwin-arm64 ./cmd/oculus/
+          GOOS=darwin GOARCH=amd64 go build -o npm/bin/oculus-darwin-amd64 ./cmd/oculus/
+          GOOS=linux GOARCH=amd64 go build -o npm/bin/oculus-linux-amd64 ./cmd/oculus/
+          GOOS=linux GOARCH=arm64 go build -o npm/bin/oculus-linux-arm64 ./cmd/oculus/
+          GOOS=windows GOARCH=amd64 go build -o npm/bin/oculus-windows-amd64.exe ./cmd/oculus/
+
+      - name: Publish to npm with provenance
+        working-directory: npm
+        run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

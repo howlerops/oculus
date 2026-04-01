@@ -1,0 +1,51 @@
+version: 2
+
+project_name: oculus
+
+builds:
+  - id: oculus
+    main: ./cmd/oculus/
+    binary: oculus
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w -X main.version={{.Version}} -X main.commit={{.Commit}}
+
+archives:
+  - id: default
+    format: tar.gz
+    name_template: "oculus_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    format_overrides:
+      - goos: windows
+        format: zip
+
+checksum:
+  name_template: 'checksums.txt'
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+      - '^chore:'
+
+brews:
+  - name: oculus
+    repository:
+      owner: howlerops
+      name: homebrew-tap
+    homepage: "https://github.com/howlerops/oculus"
+    description: "Go-native AI coding CLI with multi-model lens architecture"
+    license: "MIT"
+    install: |
+      bin.install "oculus"
+    test: |
+      system "#{bin}/oculus", "--help"
