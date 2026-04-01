@@ -70,10 +70,31 @@ func runMain(cmd *cobra.Command, args []string) error {
 		isInteractive = false
 	}
 
-	// Auth: try env -> keychain -> interactive login
-	apiKey, err := auth.GetAuthToken(cmd.Context(), isInteractive)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err.Error())
+	// Detect available providers and configure
+	providers := auth.DetectProviders()
+	hasAnyProvider := false
+	for _, p := range providers {
+		if p.Available { hasAnyProvider = true; break }
+	}
+
+	// If no providers at all and interactive, run onboarding
+	if !hasAnyProvider && isInteractive {
+		fmt.Println("No AI providers detected. Running setup wizard...")
+		auth.RunOnboardingWizard()
+		// Re-detect after wizard
+		providers = auth.DetectProviders()
+	}
+
+	// Get API key - try Anthropic first, then any available
+	apiKey := ""
+	if key, err := auth.GetAuthToken(cmd.Context(), false); err == nil {
+		apiKey = key
+	}
+	// If no Anthropic key but other providers available, that's OK - bridge handles it
+	if apiKey == "" && !hasAnyProvider {
+		fmt.Fprintln(os.Stderr, "No API keys or CLI tools found.")
+		fmt.Fprintln(os.Stderr, "Set ANTHROPIC_API_KEY, OPENAI_API_KEY, or install claude/codex/gemini CLI.")
+		fmt.Fprintln(os.Stderr, "Run 'oculus' interactively for guided setup.")
 		os.Exit(1)
 	}
 
