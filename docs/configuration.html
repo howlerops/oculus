@@ -43,5 +43,15 @@
 <tr><td><code>bypassPermissions</code></td><td>Allow everything (use with caution)</td></tr>
 <tr><td><code>plan</code></td><td>Read-only, planning only</td></tr>
 </table></section>
+<section><h2>Orchestration</h2>
+<p>Ralph loop state:</p>
+<ul>
+<li><code>.oculus/prd.json</code> — PRD with stories and acceptance criteria</li>
+<li><code>.oculus/progress.txt</code> — Append-only learnings log</li>
+</ul>
+<p>CLI flags:</p>
+<pre><code>oculus --ralph "task description"    # Start ralph loop
+oculus --plan "task description"     # Start consensus planning</code></pre>
+</section>
 </main>
 </body></html>

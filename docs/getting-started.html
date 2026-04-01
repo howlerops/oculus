@@ -239,6 +239,21 @@ Go 1.22 REST API using Chi router and sqlc for database access.
 
       <hr class="divider" />
 
+      <h2 id="orchestration">Orchestration Modes</h2>
+      <div class="code-block">
+        <pre><code># Ralph persistence loop - won't stop until done
+oculus --ralph "fix all failing tests and add missing coverage"
+
+# Consensus planning - multi-agent plan review
+oculus --plan "redesign the authentication system"
+
+# Or use slash commands in the TUI
+/ralph add pagination to the API
+/plan migrate from SQLite to PostgreSQL</code></pre>
+      </div>
+
+      <hr class="divider" />
+
       <h2 id="next-steps">Next Steps</h2>
       <div class="grid-2" style="margin-top:1rem;">
         <a href="features.html" class="card" style="text-decoration:none;color:inherit;">

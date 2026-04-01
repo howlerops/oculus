@@ -57,5 +57,23 @@
 <li>OAuth PKCE authentication with macOS Keychain storage</li>
 <li>SSRF guard on HTTP hooks</li>
 </ul></section>
+<section><h2>Orchestration Engine</h2>
+<p>Native orchestration patterns for complex multi-step tasks:</p>
+<ul>
+<li><strong>Ralph Loop</strong> (<code>/ralph</code> or <code>--ralph</code>) — PRD-driven persistence loop. Creates a Product Requirements Document, iterates through stories, verifies acceptance criteria, tracks progress. Doesn't stop until every story passes.</li>
+<li><strong>Consensus Planning</strong> (<code>/plan</code> or <code>--plan</code>) — Multi-agent planning with Planner → Architect → Critic loop. Up to 5 rounds until consensus. Produces a verified implementation plan.</li>
+<li><strong>Ultrawork</strong> — Parallel task dispatch with dependency DAG. Routes tasks to appropriate model tiers (Haiku for lookups, Sonnet for standard work, Opus for complex analysis).</li>
+<li><strong>Specialized Agents</strong> — 5 built-in personas: Architect (design review), Critic (quality evaluation), Executor (implementation), Explorer (codebase search), Planner (task decomposition).</li>
+</ul></section>
+
+<section><h2>Multi-Provider Onboarding</h2>
+<p>Interactive setup wizard that auto-detects your environment:</p>
+<ul>
+<li>Scans for API keys (Anthropic, OpenAI, Google AI)</li>
+<li>Detects installed CLIs (Claude, Codex, Gemini)</li>
+<li>Checks for local Ollama instance</li>
+<li>Recommends optimal lens configuration based on what's available</li>
+<li>Works without Anthropic — any provider can be primary</li>
+</ul></section>
 </main>
 </body></html>

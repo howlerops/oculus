@@ -53,6 +53,15 @@ Each lens can target a different model and provider.
 - **Codex CLI** — Use your OpenAI subscription
 - **Gemini CLI** — Use your Google subscription
 
+### 🔄 Orchestration Engine
+- **Ralph Loop** (`/ralph` or `--ralph`) — PRD-driven persistence until every story passes
+- **Consensus Planning** (`/plan` or `--plan`) — Planner → Architect → Critic review loop
+- **Ultrawork** — Parallel dispatch with dependency DAG and model tier routing
+- **5 Agent Personas** — Architect, Critic, Executor, Explorer, Planner
+
+### 🚀 Multi-Provider Onboarding
+Auto-detects installed CLIs, API keys, and local models. Works without Anthropic — any provider can be primary.
+
 ### 🧠 Context Management
 Episode-based compaction with LCM dual-threshold engine:
 - Below 70%: Zero overhead
