@@ -2,6 +2,7 @@ package tui
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/textarea"
@@ -20,6 +21,14 @@ type InputModel struct {
 	searchIdx     int
 	submitted     bool
 	width         int
+}
+
+
+// escapeFilter strips terminal escape/OSC sequences from text
+var escapeRe = regexp.MustCompile(`(?:\][^]*[]|\[[0-9;]*[a-zA-Z]|\][0-9]+;[^\\]*\\?)`)
+
+func filterEscapes(s string) string {
+	return escapeRe.ReplaceAllString(s, "")
 }
 
 func NewInputModel() InputModel {
@@ -165,7 +174,7 @@ func (m *InputModel) updateSearchResults() {
 }
 
 // Value returns the current input text
-func (m InputModel) Value() string { return m.textarea.Value() }
+func (m InputModel) Value() string { return filterEscapes(m.textarea.Value()) }
 
 // Reset clears the input
 func (m *InputModel) Reset() {

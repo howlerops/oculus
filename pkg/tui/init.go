@@ -5,12 +5,13 @@ import (
 
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/howlerops/oculus/pkg/commands"
 	"github.com/howlerops/oculus/pkg/lens"
 	"github.com/howlerops/oculus/pkg/query"
 )
 
 // NewModel creates the full TUI model with all components wired
-func NewModel(engine *query.Engine, lensManager *lens.Manager, systemPrompt interface{}) Model {
+func NewModel(engine *query.Engine, lensManager *lens.Manager, systemPrompt interface{}, cmdRegistry *commands.Registry) Model {
 	s := spinner.New()
 	s.Spinner = spinner.Dot
 
@@ -29,6 +30,7 @@ func NewModel(engine *query.Engine, lensManager *lens.Manager, systemPrompt inte
 		contextBar:   NewContextBar(200000, 80),
 		spinner:      s,
 		engine:       engine,
+		CmdRegistry:  cmdRegistry,
 		lensManager:  lensManager,
 		systemPrompt: systemPrompt,
 		width:        80,
@@ -47,8 +49,8 @@ func (m Model) Init() tea.Cmd {
 }
 
 // Run starts the TUI with the given engine and system prompt
-func Run(engine *query.Engine, lensManager *lens.Manager, systemPrompt interface{}) error {
-	m := NewModel(engine, lensManager, systemPrompt)
+func Run(engine *query.Engine, lensManager *lens.Manager, systemPrompt interface{}, cmdRegistry *commands.Registry) error {
+	m := NewModel(engine, lensManager, systemPrompt, cmdRegistry)
 	p := tea.NewProgram(m, tea.WithAltScreen(), tea.WithMouseCellMotion())
 	m.program = p
 	_, err := p.Run()

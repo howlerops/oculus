@@ -7,6 +7,7 @@ import (
 
 	"github.com/howlerops/oculus/pkg/api"
 	"github.com/howlerops/oculus/pkg/auth"
+	"github.com/howlerops/oculus/pkg/commands"
 	"github.com/howlerops/oculus/pkg/config"
 	"github.com/howlerops/oculus/pkg/orchestration"
 	appcontext "github.com/howlerops/oculus/pkg/context"
@@ -179,8 +180,12 @@ func runMain(cmd *cobra.Command, args []string) error {
 	}
 
 	// Interactive TUI
-	fmt.Print(oculustui.RenderSplash(80))
-	return oculustui.Run(engine, lensManager, systemPrompt)
+	// Create command registry with all builtins
+	cmdRegistry := commands.NewRegistry()
+	commands.RegisterBuiltins(cmdRegistry)
+	commands.RegisterAuthCommands(cmdRegistry)
+	commands.RegisterSessionCommands(cmdRegistry)
+	return oculustui.Run(engine, lensManager, systemPrompt, cmdRegistry)
 }
 
 func runPrintMode(ctx gocontext.Context, engine *query.Engine, prompt string, systemPrompt interface{}) error {

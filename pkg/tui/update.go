@@ -262,7 +262,7 @@ func (m Model) countTokens() (int, int) {
 	return totalIn, totalOut
 }
 
-// handleCommand dispatches slash commands
+// handleCommand dispatches slash commands dynamically
 func (m Model) handleCommand(input string) (tea.Model, tea.Cmd) {
 	m.input.Reset()
 
@@ -270,13 +270,14 @@ func (m Model) handleCommand(input string) (tea.Model, tea.Cmd) {
 	m.messages = append(m.messages, types.NewSystemMessage(types.SystemMsgInformational, input))
 
 	parts := strings.SplitN(strings.TrimPrefix(input, "/"), " ", 2)
-	cmd := parts[0]
+	cmdName := parts[0]
 	args := ""
 	if len(parts) > 1 {
 		args = parts[1]
 	}
 
-	switch cmd {
+	// Built-in TUI-specific commands (need special handling)
+	switch cmdName {
 	case "quit", "exit", "q":
 		return m, tea.Quit
 	case "ralph":
@@ -287,16 +288,29 @@ func (m Model) handleCommand(input string) (tea.Model, tea.Cmd) {
 		m.state = StateLoading
 		m.viewport.AppendMessage("system", "Starting consensus planning: "+args)
 		return m, m.startPlan(args)
-	case "compact":
-		m.viewport.AppendMessage("system", "Compacting conversation...")
-		return m, nil
-	case "help":
-		m.viewport.AppendMessage("system", "/ralph <task> - Start persistent implementation loop\n/plan <task> - Start consensus planning\n/compact - Compact conversation\n/model <name> - Switch model\n/quit - Exit")
-		return m, nil
-	default:
-		m.viewport.AppendMessage("system", "Unknown command: /"+cmd)
-		return m, nil
 	}
+
+	// Try the command registry (all 56+ commands)
+	if m.CmdRegistry != nil {
+		if cmd := m.CmdRegistry.Find(cmdName); cmd != nil {
+			output, continueConv, err := cmd.Run(m.ctx, args)
+			if err != nil {
+				m.viewport.AppendMessage("system", "Error: "+err.Error())
+			} else if output != "" {
+				m.viewport.AppendMessage("system", output)
+			}
+			if continueConv {
+				// Send as user message to the LLM
+				m.messages = append(m.messages, types.NewUserMessage(output))
+				m.state = StateLoading
+				return m, m.runQuery(m.ctx)
+			}
+			return m, nil
+		}
+	}
+
+	m.viewport.AppendMessage("system", "Unknown command: /"+cmdName+"\nType /help for available commands")
+	return m, nil
 }
 
 func (m Model) startRalph(task string) tea.Cmd {

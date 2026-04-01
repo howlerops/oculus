@@ -5,6 +5,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/howlerops/oculus/pkg/commands"
 	"github.com/howlerops/oculus/pkg/lens"
 	"github.com/howlerops/oculus/pkg/query"
 	"github.com/howlerops/oculus/pkg/types"
@@ -39,6 +40,9 @@ type Model struct {
 	statusBar  StatusBar
 	contextBar ContextBar
 	spinner    spinner.Model
+
+	// Commands
+	CmdRegistry *commands.Registry
 
 	// Backend
 	engine       *query.Engine
