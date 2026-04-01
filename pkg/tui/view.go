@@ -18,6 +18,11 @@ var (
 
 // View renders the full TUI filling the entire terminal
 func (m Model) View() string {
+	// Model picker takes over the screen
+	if m.modelPicker != nil && m.modelPicker.State == PickerOpen {
+		return padToHeight(m.modelPicker.View(), m.width, m.height)
+	}
+
 	// Permission dialog takes over the screen
 	if m.state == StatePermission && m.permission != nil {
 		return padToHeight(m.permission.View(), m.width, m.height)

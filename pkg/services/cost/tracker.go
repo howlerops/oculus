@@ -10,9 +10,9 @@ var modelPricing = map[string]struct {
 	InputPerMillion  float64
 	OutputPerMillion float64
 }{
-	"claude-sonnet-4-20250514":  {3.0, 15.0},
-	"claude-opus-4-20250514":   {15.0, 75.0},
-	"claude-haiku-4-20250506":  {0.80, 4.0},
+	"claude-sonnet-4-6":  {3.0, 15.0},
+	"claude-opus-4-6":   {15.0, 75.0},
+	"claude-haiku-4-5-20251001":  {0.80, 4.0},
 }
 
 // Tracker tracks token usage and cost across a session
@@ -47,7 +47,7 @@ func (t *Tracker) TotalCostUSD() float64 {
 
 	pricing, ok := modelPricing[t.Model]
 	if !ok {
-		pricing = modelPricing["claude-sonnet-4-20250514"]
+		pricing = modelPricing["claude-sonnet-4-6"]
 	}
 
 	inputCost := float64(t.InputTokens) / 1_000_000 * pricing.InputPerMillion

@@ -34,7 +34,7 @@ func (b *CLIBridge) Execute(ctx context.Context, messages []Message, systemPromp
 
 func (b *CLIBridge) Stream(ctx context.Context, messages []Message, systemPrompt string, tools []ToolDef, handler func(StreamChunk)) error {
 	prompt := lastUserContent(messages)
-	args := []string{"-p", prompt, "--output-format", "stream-json"}
+	args := []string{"-p", prompt, "--output-format", "stream-json", "--verbose"}
 	if b.config.Provider != "claude-code" { args = []string{"-p", prompt} }
 	cmd := exec.CommandContext(ctx, b.cmdName, args...)
 	stdout, err := cmd.StdoutPipe()

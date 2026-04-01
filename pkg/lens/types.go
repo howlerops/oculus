@@ -30,19 +30,19 @@ func DefaultConfig() OculusConfig {
 	return OculusConfig{
 		Focus: LensConfig{
 			Type:    LensFocus,
-			Model:   "claude-sonnet-4-20250514",
+			Model:   "claude-sonnet-4-6",
 			Enabled: true,
 			Persona: "You are the Focus lens - primary orchestrator. Analyze tasks, plan approaches, and coordinate work across lenses.",
 		},
 		Scan: LensConfig{
 			Type:    LensScan,
-			Model:   "claude-sonnet-4-20250514",
+			Model:   "claude-sonnet-4-6",
 			Enabled: true,
 			Persona: "You are the Scan lens - specialized in exploration and research. Search files, analyze code, gather information.",
 		},
 		Craft: LensConfig{
 			Type:    LensCraft,
-			Model:   "claude-sonnet-4-20250514",
+			Model:   "claude-sonnet-4-6",
 			Enabled: true,
 			Persona: "You are the Craft lens - specialized in execution. Write code, run commands, make changes.",
 		},

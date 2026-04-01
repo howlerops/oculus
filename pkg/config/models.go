@@ -28,20 +28,20 @@ type ModelInfo struct {
 
 // ModelRegistry holds all known models
 var ModelRegistry = map[string]ModelInfo{
-	"claude-opus-4-20250514": {
-		ID: "claude-opus-4-20250514", DisplayName: "Claude Opus 4",
+	"claude-opus-4-6": {
+		ID: "claude-opus-4-6", DisplayName: "Claude Opus 4.6",
 		Provider: ProviderFirstParty, ContextWindow: 200000, MaxOutput: 16384,
 		SupportsImages: true, SupportsThinking: true, SupportsPDFs: true, SupportsTools: true,
 		CostInput: 15.0, CostOutput: 75.0,
 	},
-	"claude-sonnet-4-20250514": {
-		ID: "claude-sonnet-4-20250514", DisplayName: "Claude Sonnet 4",
+	"claude-sonnet-4-6": {
+		ID: "claude-sonnet-4-6", DisplayName: "Claude Sonnet 4.6",
 		Provider: ProviderFirstParty, ContextWindow: 200000, MaxOutput: 16384,
 		SupportsImages: true, SupportsThinking: true, SupportsPDFs: true, SupportsTools: true,
 		CostInput: 3.0, CostOutput: 15.0,
 	},
-	"claude-haiku-4-20250506": {
-		ID: "claude-haiku-4-20250506", DisplayName: "Claude Haiku 4",
+	"claude-haiku-4-5-20251001": {
+		ID: "claude-haiku-4-5-20251001", DisplayName: "Claude Haiku 4.5",
 		Provider: ProviderFirstParty, ContextWindow: 200000, MaxOutput: 8192,
 		SupportsImages: true, SupportsThinking: false, SupportsPDFs: true, SupportsTools: true,
 		CostInput: 0.80, CostOutput: 4.0,
@@ -50,12 +50,12 @@ var ModelRegistry = map[string]ModelInfo{
 
 // ModelAliasMap maps short names to full model IDs
 var ModelAliasMap = map[string]string{
-	"opus":   "claude-opus-4-20250514",
-	"sonnet": "claude-sonnet-4-20250514",
-	"haiku":  "claude-haiku-4-20250506",
-	"o":      "claude-opus-4-20250514",
-	"s":      "claude-sonnet-4-20250514",
-	"h":      "claude-haiku-4-20250506",
+	"opus":   "claude-opus-4-6",
+	"sonnet": "claude-sonnet-4-6",
+	"haiku":  "claude-haiku-4-5-20251001",
+	"o":      "claude-opus-4-6",
+	"s":      "claude-sonnet-4-6",
+	"h":      "claude-haiku-4-5-20251001",
 }
 
 // ResolveModel resolves aliases and validates model IDs

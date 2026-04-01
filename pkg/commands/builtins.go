@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"net/http"
 	"time"
 
 	"github.com/howlerops/oculus/pkg/auth"
@@ -242,26 +243,122 @@ func RegisterBuiltins(reg *Registry) {
 
 	reg.Register(&Command{
 		Name:        "model",
-		Aliases:     []string{"m"},
-		Description: "Switch the AI model",
+		Aliases:     []string{"m", "models"},
+		Description: "Show or switch AI models by provider",
 		Run: func(_ context.Context, args string) (string, bool, error) {
 			if args == "" {
-				models := config.ListModels()
-				return fmt.Sprintf("Current model: %s\nAvailable: %s\nUsage: /model <name>", getCurrentModel(), strings.Join(models, ", ")), false, nil
+				var sb strings.Builder
+				sb.WriteString(fmt.Sprintf("Current model: %s\n\n", getCurrentModel()))
+
+				// Show models grouped by provider
+				providers := auth.DetectProviders()
+
+				// Anthropic models
+				sb.WriteString("☁️  Anthropic:\n")
+				sb.WriteString("    opus    → claude-opus-4-6    ($15/$75 per M tokens)\n")
+				sb.WriteString("    sonnet  → claude-sonnet-4-6  ($3/$15 per M tokens)\n")
+				sb.WriteString("    haiku   → claude-haiku-4-5-20251001   ($0.80/$4 per M tokens)\n")
+
+				// OpenAI models (if available)
+				for _, p := range providers {
+					if p.Name == "OpenAI" && p.Available {
+						sb.WriteString("\n🟢 OpenAI:\n")
+						sb.WriteString("    gpt-4o       → gpt-4o\n")
+						sb.WriteString("    gpt-4o-mini  → gpt-4o-mini\n")
+						sb.WriteString("    o1           → o1-preview\n")
+					}
+				}
+
+				// Ollama models (fetch live)
+				for _, p := range providers {
+					if p.Name == "Ollama" && p.Available {
+						sb.WriteString("\n🦙 Ollama (local):\n")
+						ollamaModels := fetchOllamaModels()
+						if len(ollamaModels) > 0 {
+							for _, m := range ollamaModels {
+								sb.WriteString(fmt.Sprintf("    %s\n", m))
+							}
+						} else {
+							sb.WriteString("    (no models pulled - run: ollama pull llama3)\n")
+						}
+					}
+				}
+
+				// CLI bridges
+				for _, p := range providers {
+					if p.Type == "cli" && p.Available {
+						icon := "💻"
+						sb.WriteString(fmt.Sprintf("\n%s %s:\n", icon, p.Name))
+						sb.WriteString("    Uses your existing subscription\n")
+					}
+				}
+
+				// Current lens config
+				settings, _ := config.LoadSettings()
+				if settings != nil && settings.Lenses != nil {
+					sb.WriteString("\n🔭 Lens Assignment:\n")
+					if settings.Lenses.Focus != nil {
+						sb.WriteString(fmt.Sprintf("    Focus: %s via %s\n", settings.Lenses.Focus.Model, settings.Lenses.Focus.Provider))
+					}
+					if settings.Lenses.Scan != nil {
+						sb.WriteString(fmt.Sprintf("    Scan:  %s via %s\n", settings.Lenses.Scan.Model, settings.Lenses.Scan.Provider))
+					}
+					if settings.Lenses.Craft != nil {
+						sb.WriteString(fmt.Sprintf("    Craft: %s via %s\n", settings.Lenses.Craft.Model, settings.Lenses.Craft.Provider))
+					}
+				}
+
+				sb.WriteString("\nUsage:\n")
+				sb.WriteString("  /model <name>              Switch default model\n")
+				sb.WriteString("  /model focus <name>        Set Focus lens model\n")
+				sb.WriteString("  /model scan <name>         Set Scan lens model\n")
+				sb.WriteString("  /model craft <name>        Set Craft lens model\n")
+
+				return sb.String(), false, nil
 			}
-			info, found := config.ResolveModel(args)
-			if !found {
-				return fmt.Sprintf("Unknown model: %s. Available: opus, sonnet, haiku", args), false, nil
+
+			// Parse lens-specific model setting: /model focus opus
+			parts := strings.Fields(args)
+			if len(parts) == 2 {
+				lensName := strings.ToLower(parts[0])
+				modelName := parts[1]
+				resolved := resolveModelAlias(modelName)
+
+				settings, _ := config.LoadSettings()
+				if settings == nil { settings = &config.SettingsJson{} }
+				if settings.Lenses == nil { settings.Lenses = &config.LensSettings{} }
+
+				switch lensName {
+				case "focus":
+					settings.Lenses.Focus = &config.LensModelConfig{Model: resolved}
+				case "scan":
+					settings.Lenses.Scan = &config.LensModelConfig{Model: resolved}
+				case "craft":
+					settings.Lenses.Craft = &config.LensModelConfig{Model: resolved}
+				default:
+					return fmt.Sprintf("Unknown lens: %s. Use: focus, scan, craft", lensName), false, nil
+				}
+
+				data, _ := json.Marshal(settings)
+				os.WriteFile(config.GetSettingsPath(), data, 0o644)
+				config.InvalidateSettingsCache()
+				return fmt.Sprintf("✓ %s lens set to: %s", capitalize(lensName), resolved), false, nil
 			}
+
+			// Single model switch
+			resolved := resolveModelAlias(args)
 			settings, _ := config.LoadSettings()
-			if settings == nil {
-				settings = &config.SettingsJson{}
-			}
-			settings.Model = info.ID
+			if settings == nil { settings = &config.SettingsJson{} }
+			settings.Model = resolved
 			data, _ := json.Marshal(settings)
 			os.WriteFile(config.GetSettingsPath(), data, 0o644)
 			config.InvalidateSettingsCache()
-			return fmt.Sprintf("Model switched to: %s (%s)\nInput: $%.2f/M tokens | Output: $%.2f/M tokens", info.DisplayName, info.ID, info.CostInput, info.CostOutput), false, nil
+
+			info, found := config.ResolveModel(resolved)
+			if found {
+				return fmt.Sprintf("✓ Model: %s (%s)\n  Input: $%.2f/M | Output: $%.2f/M", info.DisplayName, info.ID, info.CostInput, info.CostOutput), false, nil
+			}
+			return fmt.Sprintf("✓ Model set to: %s", resolved), false, nil
 		},
 	})
 
@@ -1104,16 +1201,46 @@ alias ccc='claude --continue'
 	})
 }
 
-func getCurrentModel() string { return "claude-sonnet-4-20250514" }
+func getCurrentModel() string { return "claude-sonnet-4-6" }
 
 func resolveModelAlias(name string) string {
 	aliases := map[string]string{
-		"opus":   "claude-opus-4-20250514",
-		"sonnet": "claude-sonnet-4-20250514",
-		"haiku":  "claude-haiku-4-20250506",
+		"opus":   "claude-opus-4-6",
+		"sonnet": "claude-sonnet-4-6",
+		"haiku":  "claude-haiku-4-5-20251001",
 	}
 	if full, ok := aliases[strings.ToLower(name)]; ok {
 		return full
 	}
 	return name
+}
+
+// fetchOllamaModels queries the local Ollama API for installed models
+func fetchOllamaModels() []string {
+	client := &http.Client{Timeout: 2 * time.Second}
+	resp, err := client.Get("http://localhost:11434/api/tags")
+	if err != nil {
+		return nil
+	}
+	defer resp.Body.Close()
+
+	var result struct {
+		Models []struct {
+			Name string `json:"name"`
+		} `json:"models"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil
+	}
+
+	var names []string
+	for _, m := range result.Models {
+		names = append(names, m.Name)
+	}
+	return names
+}
+
+func capitalize(s string) string {
+	if s == "" { return s }
+	return strings.ToUpper(s[:1]) + s[1:]
 }

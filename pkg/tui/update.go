@@ -15,6 +15,17 @@ import (
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 
+	// Handle model picker when open
+	if m.modelPicker != nil && m.modelPicker.State == PickerOpen {
+		if keyMsg, ok := msg.(tea.KeyMsg); ok {
+			selected, result := m.modelPicker.Update(keyMsg)
+			if selected {
+				m.viewport.AppendMessage("system", result)
+			}
+			return m, nil
+		}
+	}
+
 	// Handle permission dialog when active
 	if m.state == StatePermission && m.permission != nil {
 		return m.updatePermission(msg)
@@ -78,7 +89,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, nil
 			}
 
-		case tea.KeyPgUp, tea.KeyPgDown:
+		case tea.KeyPgUp, tea.KeyPgDown, tea.KeyHome, tea.KeyEnd:
 			var cmd tea.Cmd
 			m.viewport, cmd = m.viewport.Update(msg)
 			return m, cmd
@@ -182,6 +193,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.spinner, cmd = m.spinner.Update(msg)
 		m.progress.Tick()
 		cmds = append(cmds, cmd)
+
+	// Mouse events - forward to viewport for scrolling
+	case tea.MouseMsg:
+		var cmd tea.Cmd
+		m.viewport, cmd = m.viewport.Update(msg)
+		cmds = append(cmds, cmd)
 	}
 
 	return m, tea.Batch(cmds...)
@@ -201,9 +218,9 @@ func (m Model) submitInput() (tea.Model, tea.Cmd) {
 
 	m.input.Reset()
 
-	// Add user message to viewport
-	m.viewport.AppendMessage("user", input)
+	// Add user message to conversation and viewport
 	m.messages = append(m.messages, types.NewUserMessage(input))
+	m.viewport.AppendMessage("user", input)
 
 	// Start loading
 	m.state = StateLoading
@@ -306,6 +323,9 @@ func (m Model) handleCommand(input string) (tea.Model, tea.Cmd) {
 	switch cmdName {
 	case "quit", "exit", "q":
 		return m, tea.Quit
+	case "model", "models", "m":
+		m.modelPicker.Open(m.width, m.height)
+		return m, nil
 	case "ralph":
 		m.state = StateLoading
 		m.viewport.AppendMessage("system", "Starting Ralph loop: "+args)

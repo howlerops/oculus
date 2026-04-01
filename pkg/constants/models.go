@@ -2,9 +2,9 @@ package constants
 
 // Model IDs
 const (
-	ModelOpus4   = "claude-opus-4-20250514"
-	ModelSonnet4 = "claude-sonnet-4-20250514"
-	ModelHaiku4  = "claude-haiku-4-20250506"
+	ModelOpus4   = "claude-opus-4-6"
+	ModelSonnet4 = "claude-sonnet-4-6"
+	ModelHaiku4  = "claude-haiku-4-5-20251001"
 	DefaultModel = ModelSonnet4
 )
 

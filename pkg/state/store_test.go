@@ -9,12 +9,12 @@ import (
 )
 
 func TestNewStore(t *testing.T) {
-	initial := NewAppState("claude-sonnet-4-20250514")
+	initial := NewAppState("claude-sonnet-4-6")
 	store := NewStore(initial)
 
 	state := store.Get()
-	if state.MainLoopModel != "claude-sonnet-4-20250514" {
-		t.Errorf("MainLoopModel = %s, want claude-sonnet-4-20250514", state.MainLoopModel)
+	if state.MainLoopModel != "claude-sonnet-4-6" {
+		t.Errorf("MainLoopModel = %s, want claude-sonnet-4-6", state.MainLoopModel)
 	}
 }
 

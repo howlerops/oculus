@@ -91,25 +91,24 @@ func (w *LensWorker) runViaBridge(ctx context.Context, messages []types.Message,
 		promptStr = fmt.Sprintf("%v", p)
 	}
 
-	// Stream through bridge, forwarding chunks to the handler
-	err := w.Bridge.Stream(ctx, bridgeMsgs, promptStr, nil, func(chunk bridge.StreamChunk) {
-		switch chunk.Type {
-		case "text":
-			handler.OnText(chunk.Text)
-		case "done":
-			handler.OnComplete(types.StopReasonEndTurn, nil)
-		case "error":
-			handler.OnError(fmt.Errorf("%s", chunk.Error))
-		}
-	})
-
+	// Use Execute (not Stream) since the TUI program reference isn't available
+	// for real-time streaming via the bridge. Execute waits for full response.
+	resp, err := w.Bridge.Execute(ctx, bridgeMsgs, promptStr, nil)
 	if err != nil {
 		return messages, err
 	}
 
-	// Note: Bridge streaming doesn't handle tool loops.
-	// If the model requests tool use, the response will contain the text only.
-	// For full tool-loop support, use Engine directly (the default path).
+	// Build assistant message from response and append to conversation
+	if resp != nil && resp.Content != "" {
+		handler.OnText(resp.Content)
+		handler.OnComplete(types.StopReasonEndTurn, nil)
+
+		assistantMsg := types.NewAssistantMessage([]types.ContentBlock{
+			{Type: types.ContentBlockText, Text: resp.Content},
+		})
+		messages = append(messages, assistantMsg)
+	}
+
 	return messages, nil
 }
 

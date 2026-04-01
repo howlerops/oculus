@@ -141,13 +141,13 @@ const (
 func (t AgentTier) Model() string {
 	switch t {
 	case TierLow:
-		return "claude-haiku-4-20250506"
+		return "claude-haiku-4-5-20251001"
 	case TierMedium:
-		return "claude-sonnet-4-20250514"
+		return "claude-sonnet-4-6"
 	case TierHigh:
-		return "claude-opus-4-20250514"
+		return "claude-opus-4-6"
 	default:
-		return "claude-sonnet-4-20250514"
+		return "claude-sonnet-4-6"
 	}
 }
 

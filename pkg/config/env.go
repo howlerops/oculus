@@ -39,5 +39,5 @@ func GetModel() string {
 	if model := os.Getenv("ANTHROPIC_MODEL"); model != "" {
 		return model
 	}
-	return "claude-sonnet-4-20250514"
+	return "claude-sonnet-4-6"
 }

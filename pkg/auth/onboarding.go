@@ -87,9 +87,9 @@ func RecommendLensConfig(providers []DetectedProvider) config.SettingsJson {
 
 	// Default model based on what's available
 	if hasAnthropic {
-		settings.Model = "claude-sonnet-4-20250514"
+		settings.Model = "claude-sonnet-4-6"
 	} else if hasClaude {
-		settings.Model = "claude-sonnet-4-20250514"
+		settings.Model = "claude-sonnet-4-6"
 	} else if hasOpenAI {
 		settings.Model = "gpt-4o"
 	} else if hasOllama {
@@ -99,27 +99,41 @@ func RecommendLensConfig(providers []DetectedProvider) config.SettingsJson {
 	// Lens recommendations
 	settings.Lenses = &config.LensSettings{}
 
-	// Focus: best reasoning model
+	// Focus: best reasoning model (needs the smartest available)
 	if hasAnthropic {
-		settings.Lenses.Focus = &config.LensModelConfig{Model: "claude-sonnet-4-20250514", Provider: "anthropic"}
+		settings.Lenses.Focus = &config.LensModelConfig{Model: "claude-sonnet-4-6", Provider: "anthropic"}
+	} else if hasClaude {
+		settings.Lenses.Focus = &config.LensModelConfig{Model: "claude-sonnet-4-6", Provider: "claude-code"}
 	} else if hasOpenAI {
 		settings.Lenses.Focus = &config.LensModelConfig{Model: "gpt-4o", Provider: "openai"}
+	} else if hasCodex {
+		settings.Lenses.Focus = &config.LensModelConfig{Model: "codex", Provider: "codex"}
+	} else if hasOllama {
+		settings.Lenses.Focus = &config.LensModelConfig{Model: "llama3:latest", Provider: "ollama"}
 	}
 
-	// Scan: fast, cheap model for exploration
+	// Scan: fast model for exploration (prefer local/cheap)
 	if hasOllama {
 		settings.Lenses.Scan = &config.LensModelConfig{Model: "llama3:latest", Provider: "ollama"}
+	} else if hasClaude {
+		settings.Lenses.Scan = &config.LensModelConfig{Model: "claude-sonnet-4-6", Provider: "claude-code"}
 	} else if hasAnthropic {
-		settings.Lenses.Scan = &config.LensModelConfig{Model: "claude-sonnet-4-20250514", Provider: "anthropic"}
+		settings.Lenses.Scan = &config.LensModelConfig{Model: "claude-sonnet-4-6", Provider: "anthropic"}
+	} else if hasOpenAI {
+		settings.Lenses.Scan = &config.LensModelConfig{Model: "gpt-4o-mini", Provider: "openai"}
 	}
 
-	// Craft: execution model
+	// Craft: execution model (needs tool use support)
 	if hasCodex {
 		settings.Lenses.Craft = &config.LensModelConfig{Model: "codex", Provider: "codex"}
+	} else if hasClaude {
+		settings.Lenses.Craft = &config.LensModelConfig{Model: "claude-sonnet-4-6", Provider: "claude-code"}
 	} else if hasAnthropic {
-		settings.Lenses.Craft = &config.LensModelConfig{Model: "claude-sonnet-4-20250514", Provider: "anthropic"}
+		settings.Lenses.Craft = &config.LensModelConfig{Model: "claude-sonnet-4-6", Provider: "anthropic"}
 	} else if hasOpenAI {
 		settings.Lenses.Craft = &config.LensModelConfig{Model: "gpt-4o", Provider: "openai"}
+	} else if hasOllama {
+		settings.Lenses.Craft = &config.LensModelConfig{Model: "llama3:latest", Provider: "ollama"}
 	}
 
 	return settings

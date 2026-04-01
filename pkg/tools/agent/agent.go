@@ -74,11 +74,11 @@ func (t *AgentTool) Call(ctx context.Context, input map[string]interface{}, onPr
 		// Map short names to full model IDs
 		switch strings.ToLower(model) {
 		case "opus":
-			model = "claude-opus-4-20250514"
+			model = "claude-opus-4-6"
 		case "sonnet":
-			model = "claude-sonnet-4-20250514"
+			model = "claude-sonnet-4-6"
 		case "haiku":
-			model = "claude-haiku-4-20250506"
+			model = "claude-haiku-4-5-20251001"
 		}
 	}
 

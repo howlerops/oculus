@@ -51,7 +51,7 @@ func TestCreateMessageStream(t *testing.T) {
 	var finalStopReason types.StopReason
 
 	err := client.CreateMessageStream(context.Background(), MessageRequest{
-		Model:     "claude-sonnet-4-20250514",
+		Model:     "claude-sonnet-4-6",
 		MaxTokens: 100,
 		Messages: []MessageParam{
 			{Role: "user", Content: "What is 2+2?"},
@@ -87,7 +87,7 @@ func TestCreateMessageStream(t *testing.T) {
 func TestCreateMessage(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		fmt.Fprint(w, `{"id":"msg_123","type":"message","role":"assistant","content":[{"type":"text","text":"4"}],"model":"claude-sonnet-4-20250514","stop_reason":"end_turn","usage":{"input_tokens":10,"output_tokens":1}}`)
+		fmt.Fprint(w, `{"id":"msg_123","type":"message","role":"assistant","content":[{"type":"text","text":"4"}],"model":"claude-sonnet-4-6","stop_reason":"end_turn","usage":{"input_tokens":10,"output_tokens":1}}`)
 	}))
 	defer server.Close()
 
@@ -97,7 +97,7 @@ func TestCreateMessage(t *testing.T) {
 	})
 
 	resp, err := client.CreateMessage(context.Background(), MessageRequest{
-		Model:     "claude-sonnet-4-20250514",
+		Model:     "claude-sonnet-4-6",
 		MaxTokens: 100,
 		Messages: []MessageParam{
 			{Role: "user", Content: "What is 2+2?"},

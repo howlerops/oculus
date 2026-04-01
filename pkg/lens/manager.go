@@ -40,16 +40,33 @@ func NewManager(cfg OculusConfig, client *api.Client, tools tool.Tools, store *s
 		m.workers[LensCraft] = NewLensWorker(cfg.Craft, client, tools, store)
 	}
 
-	// Wire bridges for workers that specify a non-anthropic provider
+	// Wire bridges for workers
+	// If a provider is non-anthropic, always use a bridge.
+	// If provider is anthropic but the api.Client has no key, fall back to claude-code bridge.
+	apiKeyAvailable := client.GetAPIKey() != ""
 	for lensType, worker := range m.workers {
 		lensCfg := getLensConfig(cfg, lensType)
-		if lensCfg.Provider != "" && lensCfg.Provider != "anthropic" {
+		provider := lensCfg.Provider
+		if provider == "" {
+			provider = "anthropic"
+		}
+
+		needsBridge := false
+		if provider != "anthropic" {
+			needsBridge = true
+		} else if !apiKeyAvailable {
+			// No API key - try claude-code CLI as fallback
+			provider = "claude-code"
+			needsBridge = true
+		}
+
+		if needsBridge {
 			bridgeCfg := bridge.BridgeConfig{
-				Provider: lensCfg.Provider,
+				Provider: provider,
 				Model:    lensCfg.Model,
 			}
 			b, err := bridge.CreateBridge(bridgeCfg)
-			if err == nil {
+			if err == nil && b.IsAvailable() {
 				worker.SetBridge(b)
 			}
 		}

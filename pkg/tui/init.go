@@ -25,6 +25,7 @@ func NewModel(engine *query.Engine, lensManager *lens.Manager, systemPrompt inte
 		viewport:     NewMessageViewport(80, 20),
 		markdown:     md,
 		progress:     NewToolProgressTracker(),
+		modelPicker:  NewModelPicker(),
 		taskPanel:    NewTaskPanel(),
 		statusBar:    NewStatusBar(80),
 		contextBar:   NewContextBar(200000, 80),

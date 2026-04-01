@@ -301,3 +301,8 @@ func (c *Client) doWithRetry(ctx context.Context, req *http.Request, body []byte
 
 	return nil, fmt.Errorf("max retries exceeded: %w", lastErr)
 }
+
+// GetAPIKey returns the configured API key (empty if none set)
+func (c *Client) GetAPIKey() string {
+	return c.config.APIKey
+}

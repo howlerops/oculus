@@ -31,15 +31,16 @@ type Model struct {
 	height       int
 
 	// Sub-components
-	input      InputModel
-	viewport   MessageViewport
-	markdown   *MarkdownRenderer
-	progress   *ToolProgressTracker
-	permission *PermissionDialog
-	taskPanel  TaskPanel
-	statusBar  StatusBar
-	contextBar ContextBar
-	spinner    spinner.Model
+	input       InputModel
+	viewport    MessageViewport
+	markdown    *MarkdownRenderer
+	progress    *ToolProgressTracker
+	permission  *PermissionDialog
+	modelPicker *ModelPicker
+	taskPanel   TaskPanel
+	statusBar   StatusBar
+	contextBar  ContextBar
+	spinner     spinner.Model
 
 	// Commands
 	CmdRegistry  *commands.Registry
