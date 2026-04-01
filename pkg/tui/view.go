@@ -84,6 +84,14 @@ func (m Model) View() string {
 		m.viewport.viewport.Width = m.width
 		parts = append(parts, m.viewport.View())
 
+		// Loading indicator in viewport area
+		if m.state == StateLoading && m.streamBuffer == "" && !m.progress.HasRunning() {
+			loadingStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#0ea5e9"))
+			frames := []string{"⣾", "⣽", "⣻", "⢿", "⡿", "⣟", "⣯", "⣷"}
+			frame := frames[int(m.spinner.Spinner.FPS)%len(frames)]
+			parts = append(parts, loadingStyle.Render(fmt.Sprintf("\n  %s Working...\n", frame)))
+		}
+
 		// Tool progress
 		if m.progress.HasRunning() {
 			parts = append(parts, m.progress.View())

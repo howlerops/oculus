@@ -58,7 +58,7 @@ func RegisterBuiltins(reg *Registry) {
 		Aliases:     []string{"exit", "q"},
 		Description: "Exit Claude Code",
 		Run: func(_ context.Context, _ string) (string, bool, error) {
-			fmt.Println("Goodbye!")
+			
 			os.Exit(0)
 			return "", false, nil
 		},
@@ -130,13 +130,63 @@ func RegisterBuiltins(reg *Registry) {
 	reg.Register(&Command{
 		Name:        "setup",
 		Aliases:     []string{"onboarding"},
-		Description: "Re-run the provider detection and setup wizard",
+		Description: "Detect providers and configure lenses",
 		Run: func(_ context.Context, _ string) (string, bool, error) {
-			err := auth.RunOnboardingWizard()
-			if err != nil {
-				return "Setup failed: " + err.Error(), false, nil
+			providers := auth.DetectProviders()
+			var sb strings.Builder
+			sb.WriteString("◉ Oculus Provider Detection\n\n")
+
+			available := 0
+			for _, p := range providers {
+				icon := "🔑"
+				if p.Type == "cli" { icon = "💻" }
+				if p.Type == "local" { icon = "🏠" }
+				status := "✗"
+				if p.Available {
+					status = "✓"
+					available++
+				}
+				line := fmt.Sprintf("  %s %s %s", status, icon, p.Name)
+				if p.Available && p.Details != "" {
+					line += fmt.Sprintf(" (%s)", p.Details)
+				}
+				sb.WriteString(line + "\n")
 			}
-			return "Setup complete! Your providers are configured.", false, nil
+
+			sb.WriteString(fmt.Sprintf("\n%d provider(s) available.\n", available))
+
+			if available == 0 {
+				sb.WriteString("\nSet ANTHROPIC_API_KEY, OPENAI_API_KEY, or install a CLI tool.\n")
+				return sb.String(), false, nil
+			}
+
+			// Generate and save config
+			settings := auth.RecommendLensConfig(providers)
+			existing, _ := config.LoadSettings()
+			if existing == nil { existing = &config.SettingsJson{} }
+			if settings.Model != "" { existing.Model = settings.Model }
+			if settings.Lenses != nil { existing.Lenses = settings.Lenses }
+			data, _ := json.Marshal(existing)
+			os.MkdirAll(filepath.Dir(config.GetSettingsPath()), 0o755)
+			os.WriteFile(config.GetSettingsPath(), data, 0o644)
+			config.InvalidateSettingsCache()
+
+			sb.WriteString("\nLens configuration:\n")
+			if settings.Lenses != nil {
+				if settings.Lenses.Focus != nil {
+					sb.WriteString(fmt.Sprintf("  Focus: %s via %s\n", settings.Lenses.Focus.Model, settings.Lenses.Focus.Provider))
+				}
+				if settings.Lenses.Scan != nil {
+					sb.WriteString(fmt.Sprintf("  Scan:  %s via %s\n", settings.Lenses.Scan.Model, settings.Lenses.Scan.Provider))
+				}
+				if settings.Lenses.Craft != nil {
+					sb.WriteString(fmt.Sprintf("  Craft: %s via %s\n", settings.Lenses.Craft.Model, settings.Lenses.Craft.Provider))
+				}
+			}
+			sb.WriteString(fmt.Sprintf("\nDefault model: %s\n", settings.Model))
+			sb.WriteString("\n✓ Saved to " + config.GetSettingsPath())
+
+			return sb.String(), false, nil
 		},
 	})
 

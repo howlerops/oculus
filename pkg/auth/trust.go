@@ -20,7 +20,7 @@ func CheckTrustDialog() bool {
 	fmt.Println("Welcome to Oculus!")
 	fmt.Println()
 	fmt.Println("Before we begin, please note:")
-	fmt.Println("  - Claude Code can execute commands on your computer")
+	fmt.Println("  - Oculus can execute commands on your computer")
 	fmt.Println("  - You will be asked for permission before any file changes or commands")
 	fmt.Println("  - You can configure permission levels with --permission-mode")
 	fmt.Println()
