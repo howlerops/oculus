@@ -39,8 +39,23 @@ type SettingsJson struct {
 	// Additional working directories
 	AdditionalDirectories []string `json:"additionalDirectories,omitempty"`
 
+	// Lens settings
+	Lenses *LensSettings `json:"lenses,omitempty"`
+
 	// Permission rules
 	Permissions *PermissionSettings `json:"permissions,omitempty"`
+}
+
+type LensSettings struct {
+	Focus *LensModelConfig `json:"focus,omitempty"`
+	Scan  *LensModelConfig `json:"scan,omitempty"`
+	Craft *LensModelConfig `json:"craft,omitempty"`
+}
+
+type LensModelConfig struct {
+	Model    string `json:"model,omitempty"`
+	Provider string `json:"provider,omitempty"`
+	Enabled  *bool  `json:"enabled,omitempty"`
 }
 
 type ModeConfig struct {

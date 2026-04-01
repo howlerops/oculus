@@ -114,11 +114,3 @@ func containsIgnoreCase(text, substr string) bool {
 	}
 	return false
 }
-
-// LensManager will be implemented in v0.3.0 to manage lens workers
-// type LensManager struct {
-//     focus *query.Engine
-//     scan  *query.Engine
-//     craft *query.Engine
-//     router Router
-// }

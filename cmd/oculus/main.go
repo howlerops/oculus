@@ -11,6 +11,7 @@ import (
 	"github.com/howlerops/oculus/pkg/auth"
 	"github.com/howlerops/oculus/pkg/config"
 	appcontext "github.com/howlerops/oculus/pkg/context"
+	"github.com/howlerops/oculus/pkg/lens"
 	"github.com/howlerops/oculus/pkg/query"
 	"github.com/howlerops/oculus/pkg/state"
 	"github.com/howlerops/oculus/pkg/tool"
@@ -97,6 +98,16 @@ func runMain(cmd *cobra.Command, args []string) error {
 	systemPrompt := buildSystemPrompt(systemCtx, userCtx)
 
 	engine := query.NewEngine(client, tools, store, model)
+
+	// Initialize lens system
+	lensCfg := lens.DefaultConfig()
+	if model != "" {
+		lensCfg.Focus.Model = model
+		lensCfg.Scan.Model = model
+		lensCfg.Craft.Model = model
+	}
+	lensManager := lens.NewManager(lensCfg, client, tools, store)
+	_ = lensManager // Will be used for routing in future; engine still handles queries directly
 
 	// Print mode (non-interactive)
 	if flagPrint != "" {
