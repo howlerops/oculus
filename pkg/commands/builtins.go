@@ -12,6 +12,8 @@ import (
 	"time"
 
 	config "github.com/howlerops/oculus/pkg/config"
+	"github.com/howlerops/oculus/pkg/plugins"
+	"github.com/howlerops/oculus/pkg/skills"
 )
 
 // RegisterBuiltins adds all built-in commands to the registry
@@ -395,7 +397,104 @@ func RegisterBuiltins(reg *Registry) {
 		Name:        "skills",
 		Description: "List available skills",
 		Run: func(_ context.Context, _ string) (string, bool, error) {
-			return "Skills: Use /skill <name> to invoke. Check .claude/skills/ for available skills.", false, nil
+			var sb strings.Builder
+
+			// Load local skills
+			localSkills := skills.LoadSkills()
+			if len(localSkills) > 0 {
+				sb.WriteString(fmt.Sprintf("Local skills (%d):\n", len(localSkills)))
+				for _, s := range localSkills {
+					sb.WriteString(fmt.Sprintf("  - %s (%s)\n", s.Name, s.Path))
+				}
+			}
+
+			// Load plugin skills
+			mgr := plugins.NewManager()
+			mgr.LoadAll()
+			pluginSkills := mgr.LoadPluginSkills()
+			if len(pluginSkills) > 0 {
+				sb.WriteString(fmt.Sprintf("\nPlugin skills (%d):\n", len(pluginSkills)))
+				for _, s := range pluginSkills {
+					sb.WriteString(fmt.Sprintf("  - %s - %s [%s]\n", s.Name, s.Description, s.PluginName))
+				}
+			}
+
+			if sb.Len() == 0 {
+				return "No skills found. Add .md files to .oculus/skills/ or install plugins with /plugin install.", false, nil
+			}
+			return sb.String(), false, nil
+		},
+	})
+
+	// ── /plugin ─────────────────────────────────────────────────────────────
+	reg.Register(&Command{
+		Name:        "plugin",
+		Aliases:     []string{"plugins"},
+		Description: "Manage plugins (install, list, remove, search)",
+		Run: func(_ context.Context, args string) (string, bool, error) {
+			parts := strings.SplitN(args, " ", 2)
+			action := parts[0]
+			target := ""
+			if len(parts) > 1 {
+				target = parts[1]
+			}
+
+			mgr := plugins.NewManager()
+			mgr.LoadAll()
+
+			switch action {
+			case "", "list", "ls":
+				return mgr.FormatList(), false, nil
+			case "install", "add":
+				if target == "" {
+					return "Usage: /plugin install <user/repo or git URL>", false, nil
+				}
+				p, err := mgr.Install(target)
+				if err != nil {
+					return "Install failed: " + err.Error(), false, nil
+				}
+				return fmt.Sprintf("Installed %s v%s (%d skills, %d agents)", p.Manifest.Name, p.Manifest.Version, len(p.Manifest.Skills), len(p.Manifest.Agents)), false, nil
+			case "remove", "rm", "uninstall":
+				if target == "" {
+					return "Usage: /plugin remove <name>", false, nil
+				}
+				if err := mgr.Remove(target); err != nil {
+					return "Remove failed: " + err.Error(), false, nil
+				}
+				return "Removed plugin: " + target, false, nil
+			case "update":
+				if target == "" {
+					return "Usage: /plugin update <name>", false, nil
+				}
+				if err := mgr.Update(target); err != nil {
+					return "Update failed: " + err.Error(), false, nil
+				}
+				return "Updated plugin: " + target, false, nil
+			case "search":
+				if target == "" {
+					return "Usage: /plugin search <query>", false, nil
+				}
+				results, err := plugins.Search(target)
+				if err != nil {
+					return "Search failed: " + err.Error(), false, nil
+				}
+				if len(results) == 0 {
+					return "No plugins found for: " + target, false, nil
+				}
+				return "Found:\n  " + strings.Join(results, "\n  "), false, nil
+			case "enable":
+				if mgr.Enable(target) {
+					return "Enabled: " + target, false, nil
+				}
+				return "Plugin not found: " + target, false, nil
+			case "disable":
+				if mgr.Disable(target) {
+					return "Disabled: " + target, false, nil
+				}
+				return "Plugin not found: " + target, false, nil
+			default:
+				return "Usage: /plugin [list|install|remove|update|search|enable|disable] [args]", false, nil
+			}
 		},
 	})
 
