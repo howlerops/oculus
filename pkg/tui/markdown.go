@@ -20,7 +20,7 @@ func NewMarkdownRenderer(width int) *MarkdownRenderer {
 	}
 
 	renderer, err := glamour.NewTermRenderer(
-		glamour.WithAutoStyle(),
+		glamour.WithStandardStyle("dark"),
 		glamour.WithWordWrap(width-4),
 	)
 	if err != nil {

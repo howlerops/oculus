@@ -42,7 +42,8 @@ type Model struct {
 	spinner    spinner.Model
 
 	// Commands
-	CmdRegistry *commands.Registry
+	CmdRegistry  *commands.Registry
+	autocomplete *Autocomplete
 
 	// Backend
 	engine       *query.Engine

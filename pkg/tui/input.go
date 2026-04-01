@@ -2,7 +2,6 @@ package tui
 
 import (
 	"fmt"
-	"regexp"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/textarea"
@@ -24,11 +23,60 @@ type InputModel struct {
 }
 
 
-// escapeFilter strips terminal escape/OSC sequences from text
-var escapeRe = regexp.MustCompile(`(?:\][^]*[]|\[[0-9;]*[a-zA-Z]|\][0-9]+;[^\\]*\\?)`)
-
+// filterEscapes strips terminal escape/OSC sequences from text.
+// Handles ESC[...m (CSI), ESC]...ST (OSC), and bare ]11;... responses.
 func filterEscapes(s string) string {
-	return escapeRe.ReplaceAllString(s, "")
+	var result []byte
+	b := []byte(s)
+	for i := 0; i < len(b); i++ {
+		// ESC-prefixed sequences
+		if b[i] == 0x1b && i+1 < len(b) {
+			if b[i+1] == '[' {
+				// CSI: ESC [ params letter
+				j := i + 2
+				for j < len(b) && ((b[j] >= '0' && b[j] <= '9') || b[j] == ';') {
+					j++
+				}
+				if j < len(b) {
+					j++ // skip final letter
+				}
+				i = j - 1
+				continue
+			}
+			if b[i+1] == ']' {
+				// OSC: ESC ] ... BEL or ESC backslash
+				j := i + 2
+				for j < len(b) && b[j] != 0x07 && b[j] != 0x1b {
+					j++
+				}
+				if j < len(b) && b[j] == 0x07 {
+					i = j
+					continue
+				}
+				if j+1 < len(b) && b[j] == 0x1b && b[j+1] == '\\' {
+					i = j + 1
+					continue
+				}
+				i = j - 1
+				continue
+			}
+			i++ // skip ESC + next char
+			continue
+		}
+		// Bare OSC response: ]11;rgb:... backslash
+		if b[i] == ']' && i+1 < len(b) && b[i+1] >= '0' && b[i+1] <= '9' {
+			j := i + 1
+			for j < len(b) && b[j] != 0x07 && b[j] != '\\' && b[j] != '\n' {
+				j++
+			}
+			if j < len(b) && (b[j] == 0x07 || b[j] == '\\') {
+				i = j
+				continue
+			}
+		}
+		result = append(result, b[i])
+	}
+	return string(result)
 }
 
 func NewInputModel() InputModel {
@@ -56,6 +104,15 @@ func (m InputModel) Update(msg tea.Msg) (InputModel, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
+		// Filter out escape sequence responses (OSC, CSI) that some terminals inject
+		if msg.Type == tea.KeyRunes {
+			s := string(msg.Runes)
+			if strings.Contains(s, "]11;") || strings.Contains(s, "]10;") ||
+				strings.Contains(s, "rgb:") || strings.HasPrefix(s, "\x1b") {
+				return m, nil // swallow escape response
+			}
+		}
+
 		// Handle search mode
 		if m.searching {
 			return m.updateSearch(msg)

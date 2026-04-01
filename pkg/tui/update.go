@@ -27,10 +27,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.width = msg.Width
 		m.height = msg.Height
 		m.input.SetWidth(msg.Width)
-		m.viewport = NewMessageViewport(msg.Width, msg.Height-8) // leave room for input + status
+		viewH := msg.Height - 8
+		if viewH < 5 { viewH = 5 }
+		m.viewport.viewport.Width = msg.Width
+		m.viewport.viewport.Height = viewH
+		m.viewport.width = msg.Width
+		m.viewport.height = viewH
 		m.statusBar.Width = msg.Width
 		m.contextBar.Width = msg.Width
 		m.markdown = NewMarkdownRenderer(msg.Width - 4)
+		m.taskPanel.Width = msg.Width / 3
 		return m, nil
 
 	// Keyboard input
@@ -60,6 +66,18 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, cmd
 			}
 
+		case tea.KeyTab:
+			// Accept autocomplete selection
+			if m.autocomplete != nil && m.autocomplete.Active {
+				selected := m.autocomplete.GetSelected()
+				if selected != "" {
+					m.input.textarea.SetValue(selected + " ")
+					m.input.textarea.CursorEnd()
+					m.autocomplete.Dismiss()
+				}
+				return m, nil
+			}
+
 		case tea.KeyPgUp, tea.KeyPgDown:
 			var cmd tea.Cmd
 			m.viewport, cmd = m.viewport.Update(msg)
@@ -70,9 +88,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		var cmd tea.Cmd
 		m.input, cmd = m.input.Update(msg)
 		if m.input.IsSubmitted() {
+			if m.autocomplete != nil {
+				m.autocomplete.Dismiss()
+			}
 			return m.submitInput()
 		}
 		cmds = append(cmds, cmd)
+
+		// Update autocomplete dropdown
+		if m.autocomplete != nil {
+			m.autocomplete.Update(m.input.Value())
+		}
 
 	// Streaming text from assistant
 	case StreamTextMsg:

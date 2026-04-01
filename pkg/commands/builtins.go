@@ -11,7 +11,8 @@ import (
 	"strings"
 	"time"
 
-	config "github.com/howlerops/oculus/pkg/config"
+	"github.com/howlerops/oculus/pkg/auth"
+	"github.com/howlerops/oculus/pkg/config"
 	"github.com/howlerops/oculus/pkg/plugins"
 	"github.com/howlerops/oculus/pkg/skills"
 )
@@ -122,6 +123,20 @@ func RegisterBuiltins(reg *Registry) {
 		Description: "Show version information",
 		Run: func(_ context.Context, _ string) (string, bool, error) {
 			return "oculus v0.3.0", false, nil
+		},
+	})
+
+
+	reg.Register(&Command{
+		Name:        "setup",
+		Aliases:     []string{"onboarding"},
+		Description: "Re-run the provider detection and setup wizard",
+		Run: func(_ context.Context, _ string) (string, bool, error) {
+			err := auth.RunOnboardingWizard()
+			if err != nil {
+				return "Setup failed: " + err.Error(), false, nil
+			}
+			return "Setup complete! Your providers are configured.", false, nil
 		},
 	})
 

@@ -31,6 +31,7 @@ func NewModel(engine *query.Engine, lensManager *lens.Manager, systemPrompt inte
 		spinner:      s,
 		engine:       engine,
 		CmdRegistry:  cmdRegistry,
+		autocomplete: NewAutocomplete(cmdRegistry),
 		lensManager:  lensManager,
 		systemPrompt: systemPrompt,
 		width:        80,
