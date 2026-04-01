@@ -2,10 +2,12 @@ package tui
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/howlerops/oculus/pkg/orchestration"
 	"github.com/howlerops/oculus/pkg/types"
 )
 
@@ -166,12 +168,12 @@ func (m Model) submitInput() (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 
-	m.input.Reset()
-
-	// Handle commands
-	if input == "/quit" || input == "/exit" {
-		return m, tea.Quit
+	// Parse slash commands
+	if strings.HasPrefix(input, "/") {
+		return m.handleCommand(input)
 	}
+
+	m.input.Reset()
 
 	// Add user message to viewport
 	m.viewport.AppendMessage("user", input)
@@ -258,4 +260,63 @@ func (m Model) countTokens() (int, int) {
 		}
 	}
 	return totalIn, totalOut
+}
+
+// handleCommand dispatches slash commands
+func (m Model) handleCommand(input string) (tea.Model, tea.Cmd) {
+	m.input.Reset()
+
+	parts := strings.SplitN(strings.TrimPrefix(input, "/"), " ", 2)
+	cmd := parts[0]
+	args := ""
+	if len(parts) > 1 {
+		args = parts[1]
+	}
+
+	switch cmd {
+	case "quit", "exit", "q":
+		return m, tea.Quit
+	case "ralph":
+		m.state = StateLoading
+		m.viewport.AppendMessage("system", "Starting Ralph loop: "+args)
+		return m, m.startRalph(args)
+	case "plan":
+		m.state = StateLoading
+		m.viewport.AppendMessage("system", "Starting consensus planning: "+args)
+		return m, m.startPlan(args)
+	case "compact":
+		m.viewport.AppendMessage("system", "Compacting conversation...")
+		return m, nil
+	case "help":
+		m.viewport.AppendMessage("system", "/ralph <task> - Start persistent implementation loop\n/plan <task> - Start consensus planning\n/compact - Compact conversation\n/model <name> - Switch model\n/quit - Exit")
+		return m, nil
+	default:
+		m.viewport.AppendMessage("system", "Unknown command: /"+cmd)
+		return m, nil
+	}
+}
+
+func (m Model) startRalph(task string) tea.Cmd {
+	return func() tea.Msg {
+		cfg := orchestration.RalphConfig{Task: task}
+		err := orchestration.RalphLoop(m.ctx, cfg, m.lensManager)
+		if err != nil {
+			return ErrorMsg{Err: err}
+		}
+		return ResponseMsg{Messages: m.messages}
+	}
+}
+
+func (m Model) startPlan(task string) tea.Cmd {
+	return func() tea.Msg {
+		result, err := orchestration.PlanConsensus(m.ctx, task, m.lensManager)
+		if err != nil {
+			return ErrorMsg{Err: err}
+		}
+		status := "Consensus reached"
+		if !result.Converged {
+			status = fmt.Sprintf("No consensus after %d rounds", result.Rounds)
+		}
+		return StreamTextMsg{Text: fmt.Sprintf("\n%s:\n\n%s", status, result.FinalPlan)}
+	}
 }

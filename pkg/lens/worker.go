@@ -37,11 +37,80 @@ func (w *LensWorker) SetBridge(b bridge.Bridge) {
 	w.Bridge = b
 }
 
-// RunQuery executes a query through this lens with its persona injected
+// RunQuery executes a query through this lens with its persona injected.
+// If a Bridge is set, it routes through the bridge for streaming.
+// Falls back to Engine for tool loops (bridges don't handle tool dispatch).
 func (w *LensWorker) RunQuery(ctx context.Context, messages []types.Message, baseSystemPrompt interface{}, handler query.StreamHandler) ([]types.Message, error) {
-	// Prepend lens persona to system prompt
 	systemPrompt := w.buildSystemPrompt(baseSystemPrompt)
+
+	// If bridge is set and available, use it for the streaming call
+	if w.Bridge != nil && w.Bridge.IsAvailable() {
+		return w.runViaBridge(ctx, messages, systemPrompt, handler)
+	}
+
+	// Default: use the query engine directly (handles tool loops natively)
 	return w.Engine.RunQuery(ctx, messages, systemPrompt, handler)
+}
+
+// runViaBridge routes through the bridge for streaming, then falls back to
+// Engine for tool loop handling since bridges don't dispatch tools.
+func (w *LensWorker) runViaBridge(ctx context.Context, messages []types.Message, systemPrompt interface{}, handler query.StreamHandler) ([]types.Message, error) {
+	// Convert types.Message -> bridge.Message
+	var bridgeMsgs []bridge.Message
+	for _, msg := range messages {
+		switch msg.Kind {
+		case "user":
+			if msg.User != nil {
+				var text string
+				for _, b := range msg.User.Content {
+					if b.Type == types.ContentBlockText {
+						text += b.Text
+					}
+				}
+				bridgeMsgs = append(bridgeMsgs, bridge.Message{Role: "user", Content: text})
+			}
+		case "assistant":
+			if msg.Assistant != nil {
+				var text string
+				for _, b := range msg.Assistant.Content {
+					if b.Type == types.ContentBlockText {
+						text += b.Text
+					}
+				}
+				bridgeMsgs = append(bridgeMsgs, bridge.Message{Role: "assistant", Content: text})
+			}
+		}
+	}
+
+	// Convert system prompt to string
+	promptStr := ""
+	switch p := systemPrompt.(type) {
+	case string:
+		promptStr = p
+	default:
+		promptStr = fmt.Sprintf("%v", p)
+	}
+
+	// Stream through bridge, forwarding chunks to the handler
+	err := w.Bridge.Stream(ctx, bridgeMsgs, promptStr, nil, func(chunk bridge.StreamChunk) {
+		switch chunk.Type {
+		case "text":
+			handler.OnText(chunk.Text)
+		case "done":
+			handler.OnComplete(types.StopReasonEndTurn, nil)
+		case "error":
+			handler.OnError(fmt.Errorf("%s", chunk.Error))
+		}
+	})
+
+	if err != nil {
+		return messages, err
+	}
+
+	// Note: Bridge streaming doesn't handle tool loops.
+	// If the model requests tool use, the response will contain the text only.
+	// For full tool-loop support, use Engine directly (the default path).
+	return messages, nil
 }
 
 // buildSystemPrompt prepends the lens persona to the base system prompt

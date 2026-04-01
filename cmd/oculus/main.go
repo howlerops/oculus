@@ -8,6 +8,7 @@ import (
 	"github.com/howlerops/oculus/pkg/api"
 	"github.com/howlerops/oculus/pkg/auth"
 	"github.com/howlerops/oculus/pkg/config"
+	"github.com/howlerops/oculus/pkg/orchestration"
 	appcontext "github.com/howlerops/oculus/pkg/context"
 	"github.com/howlerops/oculus/pkg/lens"
 	"github.com/howlerops/oculus/pkg/query"
@@ -25,14 +26,16 @@ import (
 )
 
 var (
-	flagModel          string
-	flagVerbose        bool
-	flagPrint          string
-	flagPermissionMode string
-	flagDebug          bool
-	flagAddDirs        []string
-	flagAllowedTools   []string
+	flagModel           string
+	flagVerbose         bool
+	flagPrint           string
+	flagPermissionMode  string
+	flagDebug           bool
+	flagAddDirs         []string
+	flagAllowedTools    []string
 	flagDisallowedTools []string
+	flagRalph           string
+	flagPlan            string
 )
 
 func main() {
@@ -51,6 +54,8 @@ func main() {
 	rootCmd.Flags().StringSliceVar(&flagAddDirs, "add-dir", nil, "Additional working directories")
 	rootCmd.Flags().StringSliceVar(&flagAllowedTools, "allowedTools", nil, "Tools to allow")
 	rootCmd.Flags().StringSliceVar(&flagDisallowedTools, "disallowedTools", nil, "Tools to disallow")
+	rootCmd.Flags().StringVar(&flagRalph, "ralph", "", "Start Ralph persistence loop for a task")
+	rootCmd.Flags().StringVar(&flagPlan, "plan", "", "Start consensus planning for a task")
 
 	if err := rootCmd.Execute(); err != nil {
 		os.Exit(1)
@@ -108,6 +113,26 @@ func runMain(cmd *cobra.Command, args []string) error {
 		lensCfg.Craft.Model = model
 	}
 	lensManager := lens.NewManager(lensCfg, client, tools, store)
+
+	// Ralph mode
+	if flagRalph != "" {
+		cfg := orchestration.RalphConfig{Task: flagRalph}
+		return orchestration.RalphLoop(cmd.Context(), cfg, lensManager)
+	}
+
+	// Plan mode
+	if flagPlan != "" {
+		result, err := orchestration.PlanConsensus(cmd.Context(), flagPlan, lensManager)
+		if err != nil {
+			return err
+		}
+		status := "Consensus reached"
+		if !result.Converged {
+			status = fmt.Sprintf("No consensus after %d rounds", result.Rounds)
+		}
+		fmt.Printf("%s:\n\n%s\n", status, result.FinalPlan)
+		return nil
+	}
 
 	// Print mode (non-interactive)
 	if flagPrint != "" {
