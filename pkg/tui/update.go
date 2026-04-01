@@ -266,6 +266,9 @@ func (m Model) countTokens() (int, int) {
 func (m Model) handleCommand(input string) (tea.Model, tea.Cmd) {
 	m.input.Reset()
 
+	// Add system message so splash screen clears
+	m.messages = append(m.messages, types.NewSystemMessage(types.SystemMsgInformational, input))
+
 	parts := strings.SplitN(strings.TrimPrefix(input, "/"), " ", 2)
 	cmd := parts[0]
 	args := ""

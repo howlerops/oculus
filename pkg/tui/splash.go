@@ -14,7 +14,7 @@ const oculusASCII = `
   \___/ \____| \___/|_____|\_____/____/
 `
 
-const tagline = "AI Coding Assistant • Powered by Claude"
+const tagline = "AI Coding Assistant • by HowlerOps"
 
 // RenderSplash returns the splash screen for interactive mode
 func RenderSplash(width int) string {
@@ -43,7 +43,7 @@ func RenderSplash(width int) string {
 	sb.WriteString("\n")
 	sb.WriteString(tagStyle.Render(centerText(tagline, width)))
 	sb.WriteString("\n")
-	sb.WriteString(versionStyle.Render(centerText("v0.2.0 • github.com/howlerops/oculus", width)))
+	sb.WriteString(versionStyle.Render(centerText("v0.5.1 • github.com/howlerops/oculus", width)))
 	sb.WriteString("\n\n")
 
 	return sb.String()

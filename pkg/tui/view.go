@@ -25,8 +25,8 @@ func (m Model) View() string {
 		return m.permission.View()
 	}
 
-	// Show splash if no messages yet
-	if len(m.messages) == 0 && m.state == StateChat {
+	// Show splash if no messages and no viewport content
+	if len(m.messages) == 0 && m.viewport.content.Len() == 0 && m.state == StateChat {
 		splash := RenderSplash(m.width)
 		return splash + "\n" + m.input.View() + "\n" + m.statusBar.View()
 	}

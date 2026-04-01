@@ -77,12 +77,21 @@ func runMain(cmd *cobra.Command, args []string) error {
 		if p.Available { hasAnyProvider = true; break }
 	}
 
-	// If no providers at all and interactive, run onboarding
-	if !hasAnyProvider && isInteractive {
-		fmt.Println("No AI providers detected. Running setup wizard...")
+	// Check if first run (no settings file exists)
+	isFirstRun := false
+	if _, err := os.Stat(config.GetSettingsPath()); os.IsNotExist(err) {
+		isFirstRun = true
+	}
+
+	// Run onboarding on first run OR if no providers detected
+	if isInteractive && (isFirstRun || !hasAnyProvider) {
 		auth.RunOnboardingWizard()
 		// Re-detect after wizard
 		providers = auth.DetectProviders()
+		hasAnyProvider = false
+		for _, p := range providers {
+			if p.Available { hasAnyProvider = true; break }
+		}
 	}
 
 	// Get API key - try Anthropic first, then any available
