@@ -16,3 +16,5 @@ claude-go
 *.swo
 old-src
 oculus
+.omc/sessions/
+.omc/project-memory.json

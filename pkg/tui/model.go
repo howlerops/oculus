@@ -2,6 +2,7 @@ package tui
 
 import (
 	"context"
+	"time"
 
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
@@ -29,6 +30,7 @@ type Model struct {
 	err          error
 	width        int
 	height       int
+	loadingStart time.Time
 
 	// Sub-components
 	input       InputModel

@@ -70,7 +70,8 @@ func (m *MessageViewport) AppendMessage(role, content string) {
 	}
 
 	if m.content.Len() > 0 {
-		m.content.WriteString("\n")
+		separator := lipgloss.NewStyle().Foreground(lipgloss.Color("#334155")).Render(strings.Repeat("─", 40))
+		m.content.WriteString(separator + "\n")
 	}
 	m.content.WriteString(roleStyle.Render(titleCase(role) + ": "))
 	m.content.WriteString(content)

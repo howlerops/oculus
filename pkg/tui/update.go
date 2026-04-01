@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
@@ -225,6 +226,7 @@ func (m Model) submitInput() (tea.Model, tea.Cmd) {
 	// Start loading
 	m.state = StateLoading
 	m.streamBuffer = ""
+	m.loadingStart = time.Now()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	m.ctx = ctx

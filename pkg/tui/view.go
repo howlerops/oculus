@@ -3,6 +3,7 @@ package tui
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/charmbracelet/lipgloss"
 )
@@ -30,6 +31,12 @@ func (m Model) View() string {
 
 	// Build bottom section (always visible): autocomplete + input + status bar
 	var bottomParts []string
+
+	// Context line above input (lens + model)
+	if m.engine != nil {
+		ctxStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#64748b"))
+		bottomParts = append(bottomParts, ctxStyle.Render(fmt.Sprintf("  Focus • %s", m.getModelName())))
+	}
 
 	// Autocomplete dropdown
 	if m.autocomplete != nil && m.autocomplete.Active && len(m.autocomplete.Matches) > 0 {
@@ -76,7 +83,8 @@ func (m Model) View() string {
 		// Header
 		header := headerViewStyle.Render("◉ Oculus")
 		if m.state == StateLoading {
-			header += " " + m.spinner.View() + mutedViewStyle.Render(" thinking...")
+			elapsed := time.Since(m.loadingStart).Round(time.Second)
+			header += " " + m.spinner.View() + mutedViewStyle.Render(fmt.Sprintf(" thinking... %s", elapsed))
 		}
 		parts = append(parts, header)
 
@@ -91,10 +99,9 @@ func (m Model) View() string {
 
 		// Loading indicator in viewport area
 		if m.state == StateLoading && m.streamBuffer == "" && !m.progress.HasRunning() {
+			elapsed := time.Since(m.loadingStart).Round(time.Second)
 			loadingStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#0ea5e9"))
-			frames := []string{"⣾", "⣽", "⣻", "⢿", "⡿", "⣟", "⣯", "⣷"}
-			frame := frames[int(m.spinner.Spinner.FPS)%len(frames)]
-			parts = append(parts, loadingStyle.Render(fmt.Sprintf("\n  %s Working...\n", frame)))
+			parts = append(parts, loadingStyle.Render(fmt.Sprintf("\n  %s Processing your request... %s\n", m.spinner.View(), elapsed)))
 		}
 
 		// Tool progress

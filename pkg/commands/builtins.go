@@ -1199,6 +1199,89 @@ alias ccc='claude --continue'
 			return "Proactive mode enabled. Claude will offer unsolicited suggestions and observations.", false, nil
 		},
 	})
+
+	reg.Register(&Command{
+		Name:        "upgrade",
+		Aliases:     []string{"update"},
+		Description: "Check for updates and upgrade Oculus",
+		Run: func(_ context.Context, args string) (string, bool, error) {
+			currentVersion := "0.6.0"
+
+			// Check latest release via gh CLI or direct HTTP
+			var latestVersion, downloadURL string
+
+			// Try gh CLI first
+			out, err := exec.Command("gh", "api", "repos/howlerops/oculus/releases/latest", "--jq", ".tag_name").Output()
+			if err == nil {
+				latestVersion = strings.TrimSpace(strings.TrimPrefix(string(out), "v"))
+			} else {
+				// Fallback: HTTP request
+				client := &http.Client{Timeout: 10 * time.Second}
+				resp, err := client.Get("https://api.github.com/repos/howlerops/oculus/releases/latest")
+				if err != nil {
+					return "Failed to check for updates: " + err.Error(), false, nil
+				}
+				defer resp.Body.Close()
+				var release struct {
+					TagName string `json:"tag_name"`
+					Assets  []struct {
+						Name               string `json:"name"`
+						BrowserDownloadURL string `json:"browser_download_url"`
+					} `json:"assets"`
+				}
+				json.NewDecoder(resp.Body).Decode(&release)
+				latestVersion = strings.TrimPrefix(release.TagName, "v")
+
+				// Find the right asset for this platform
+				goos := runtime.GOOS
+				goarch := runtime.GOARCH
+				suffix := fmt.Sprintf("%s_%s", goos, goarch)
+				for _, asset := range release.Assets {
+					if strings.Contains(asset.Name, suffix) && !strings.Contains(asset.Name, "checksums") {
+						downloadURL = asset.BrowserDownloadURL
+						break
+					}
+				}
+			}
+
+			if latestVersion == "" {
+				return "Could not determine latest version.", false, nil
+			}
+
+			if latestVersion == currentVersion {
+				return fmt.Sprintf("✓ Oculus is up to date (v%s)", currentVersion), false, nil
+			}
+
+			var sb strings.Builder
+			sb.WriteString(fmt.Sprintf("Update available: v%s → v%s\n\n", currentVersion, latestVersion))
+
+			if args == "now" || args == "install" {
+				if downloadURL == "" {
+					// Use go install as fallback
+					sb.WriteString("Installing via go install...\n")
+					cmd := exec.Command("go", "install", fmt.Sprintf("github.com/howlerops/oculus/cmd/oculus@v%s", latestVersion))
+					cmdOut, err := cmd.CombinedOutput()
+					if err != nil {
+						sb.WriteString(fmt.Sprintf("Failed: %s\n%s", err, string(cmdOut)))
+					} else {
+						sb.WriteString(fmt.Sprintf("✓ Upgraded to v%s\n", latestVersion))
+						sb.WriteString("Restart oculus to use the new version.")
+					}
+				} else {
+					sb.WriteString(fmt.Sprintf("Download: %s\n", downloadURL))
+					sb.WriteString("To install: download, extract, and replace the binary.\n")
+					sb.WriteString("Or run: go install github.com/howlerops/oculus/cmd/oculus@latest")
+				}
+			} else {
+				sb.WriteString("Run /upgrade now to install.\n")
+				sb.WriteString("Or manually:\n")
+				sb.WriteString(fmt.Sprintf("  go install github.com/howlerops/oculus/cmd/oculus@v%s\n", latestVersion))
+				sb.WriteString("  brew upgrade howlerops/tap/oculus")
+			}
+
+			return sb.String(), false, nil
+		},
+	})
 }
 
 func getCurrentModel() string { return "claude-sonnet-4-6" }
