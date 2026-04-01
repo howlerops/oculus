@@ -1,6 +1,6 @@
 {
   "name": "@howlerops/oculus",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Oculus - Go-native AI coding CLI with multi-model lens architecture",
   "bin": {
     "oculus": "./bin/run.js"
