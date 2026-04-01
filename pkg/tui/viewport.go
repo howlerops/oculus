@@ -22,7 +22,7 @@ func titleCase(s string) string {
 // MessageViewport is a scrollable message display
 type MessageViewport struct {
 	viewport viewport.Model
-	content  strings.Builder
+	content  *strings.Builder
 	width    int
 	height   int
 	ready    bool
@@ -33,6 +33,7 @@ func NewMessageViewport(width, height int) MessageViewport {
 	vp.MouseWheelEnabled = true
 	return MessageViewport{
 		viewport: vp,
+		content:  &strings.Builder{},
 		width:    width,
 		height:   height,
 		ready:    true,
